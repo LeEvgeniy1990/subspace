@@ -23,6 +23,17 @@
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
+#[cfg(feature = "std")]
+mod cirrus_wasm {
+    // Make the Cirrus WASM binary available.
+    include!(concat!(env!("OUT_DIR"), "/cirrus_wasm_binary.rs"));
+
+    pub use self::WASM_BINARY as CIRRUS_WASM_BINARY;
+    pub use self::WASM_BINARY_BLOATY as CIRRUS_WASM_BINARY_BLOATY;
+}
+
+#[cfg(feature = "std")]
+pub use cirrus_wasm::{CIRRUS_WASM_BINARY, CIRRUS_WASM_BINARY_BLOATY};
 use codec::{Compact, CompactLen, Decode, Encode};
 use core::time::Duration;
 use frame_support::traits::{
