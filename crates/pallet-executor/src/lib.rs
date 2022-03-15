@@ -28,6 +28,11 @@ const INVALID_FRAUD_PROOF: u8 = 100;
 const INVALID_BUNDLE_EQUIVOCATION_PROOF: u8 = 101;
 const INVALID_TRANSACTION_PROOF: u8 = 102;
 
+/// Wasm code of the runtime.
+///
+/// Stored as a raw byte vector. Required by Subspace.
+pub const CIRRUS_CODE: &[u8] = b":cirrus_code";
+
 #[frame_support::pallet]
 mod pallet {
     use crate::{
@@ -259,6 +264,20 @@ mod pallet {
 
                 _ => InvalidTransaction::Call.into(),
             }
+        }
+    }
+
+    #[cfg_attr(feature = "std", derive(Default))]
+    #[pallet::genesis_config]
+    pub struct GenesisConfig {
+        #[serde(with = "sp_core::bytes")]
+        pub code: Vec<u8>,
+    }
+
+    #[pallet::genesis_build]
+    impl<T: Config> GenesisBuild<T> for GenesisConfig {
+        fn build(&self) {
+            sp_io::storage::set(crate::CIRRUS_CODE, &self.code);
         }
     }
 }

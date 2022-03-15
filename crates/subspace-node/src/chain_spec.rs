@@ -276,5 +276,10 @@ fn subspace_genesis_config(
             key: Some(sudo_account),
         },
         vesting: subspace_runtime::VestingConfig { vesting },
+        executor: subspace_runtime::ExecutorConfig {
+            code: subspace_runtime::CIRRUS_WASM_BINARY
+                .expect("Cirrus wasm not available")
+                .to_vec(),
+        },
     }
 }

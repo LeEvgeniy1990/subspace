@@ -5,7 +5,8 @@ use sp_core::{sr25519, Pair, Public};
 use sp_runtime::traits::{IdentifyAccount, Verify};
 use subspace_runtime_primitives::{AccountId, Balance, BlockNumber, Signature};
 use subspace_test_runtime::{
-    BalancesConfig, GenesisConfig, SudoConfig, SystemConfig, VestingConfig, SSC, WASM_BINARY,
+    BalancesConfig, ExecutorConfig, GenesisConfig, SudoConfig, SystemConfig, VestingConfig,
+    CIRRUS_WASM_BINARY, SSC, WASM_BINARY,
 };
 
 /// The `ChainSpec` parameterized for subspace test runtime.
@@ -84,5 +85,10 @@ fn create_genesis_config(
             key: Some(sudo_account),
         },
         vesting: VestingConfig { vesting },
+        executor: ExecutorConfig {
+            code: CIRRUS_WASM_BINARY
+                .expect("Cirrus wasm not available")
+                .to_vec(),
+        },
     }
 }

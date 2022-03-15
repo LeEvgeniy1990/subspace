@@ -5031,6 +5031,7 @@ dependencies = [
  "scale-info",
  "sp-core",
  "sp-executor",
+ "sp-io",
 ]
 
 [[package]]
