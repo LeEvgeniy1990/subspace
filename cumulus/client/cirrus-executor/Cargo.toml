@@ -41,6 +41,7 @@ polkadot-node-subsystem = { path = "../../../polkadot/node/subsystem" }
 
 cirrus-block-builder = { path = "../block-builder" }
 cirrus-client-executor-gossip = { path = "../executor-gossip" }
+cirrus-fraud-proof = { path = "../fraud-proof" }
 cirrus-node-primitives = { path = "../../../crates/cirrus-node-primitives" }
 cirrus-primitives = { path = "../../primitives" }
 sp-executor = { path = "../../../crates/sp-executor" }

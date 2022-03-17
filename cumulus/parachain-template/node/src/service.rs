@@ -202,6 +202,13 @@ where
 		return Err("Light client not supported!".into())
 	}
 
+	let executor = sc_executor::NativeElseWasmExecutor::<Executor>::new(
+		parachain_config.wasm_method,
+		parachain_config.default_heap_pages,
+		parachain_config.max_runtime_instances,
+		parachain_config.runtime_cache_size,
+	);
+
 	let mut parachain_config = prepare_node_config(parachain_config);
 
 	parachain_config
@@ -306,13 +313,14 @@ where
 		client: client.clone(),
 		task_manager: &mut task_manager,
 		primary_chain_full_node,
-		spawner,
+		spawner: Box::new(spawner),
 		parachain_consensus,
 		import_queue,
 		transaction_pool,
 		network,
 		backend,
 		create_inherent_data_providers: Arc::new(move |_, _relay_parent| async move { Ok(()) }),
+		code_executor: Arc::new(executor),
 		is_authority: validator,
 	};
 

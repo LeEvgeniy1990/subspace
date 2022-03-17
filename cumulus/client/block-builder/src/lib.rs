@@ -223,6 +223,40 @@ where
 		Ok(())
 	}
 
+	/// Returns the overlayed changes before executing the extrinsic at given extrinsic index.
+	pub fn prepare_overlay_before(
+		&mut self,
+		extrinsic_index: usize,
+	) -> Result<sp_api::OverlayedChanges, Error> {
+		for (index, xt) in self.extrinsics.iter().enumerate() {
+			if index == extrinsic_index {
+				return Ok(self.api.overlay().into_inner())
+			}
+
+			// TODO: rethink what to do if an error occurs when executing the transaction.
+			self.api.execute_in_transaction(|api| {
+				let res = api.apply_extrinsic_with_context(
+					&self.block_id,
+					ExecutionContext::BlockConstruction,
+					xt.clone(),
+				);
+				match res {
+					Ok(Ok(_)) => TransactionOutcome::Commit(Ok(())),
+					Ok(Err(tx_validity)) => TransactionOutcome::Rollback(Err(
+						ApplyExtrinsicFailed::Validity(tx_validity).into(),
+					)),
+					Err(e) => TransactionOutcome::Rollback(Err(Error::from(e))),
+				}
+			})?;
+		}
+
+		Err(Error::Execution(Box::new(format!(
+			"Invalid extrinsic index, got: {}, max: {}",
+			extrinsic_index,
+			self.extrinsics.len()
+		))))
+	}
+
 	/// Consume the builder to build a valid `Block` containing all pushed extrinsics.
 	///
 	/// Returns the build `Block`, the changes to the storage and an optional `StorageProof`

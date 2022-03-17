@@ -27,8 +27,9 @@
 #![warn(missing_docs)]
 #![allow(clippy::all)]
 
-use codec::Encode;
-
+use codec::{Codec, Decode, Encode};
+use hash_db::{HashDB, Hasher, Prefix};
+use sc_client_api::{backend, CallExecutor, ExecutorProvider};
 use sp_api::{
 	ApiExt, ApiRef, Core, ProvideRuntimeApi, StateBackend, StorageChanges, StorageProof,
 	TransactionOutcome,
@@ -43,10 +44,9 @@ use sp_runtime::{
 	traits::{Block as BlockT, Hash, HashFor, Header as HeaderT, NumberFor, One},
 	Digest,
 };
-
-pub use sp_block_builder::BlockBuilder as BlockBuilderApi;
-
-use sc_client_api::{backend, CallExecutor, ExecutorProvider};
+use sp_state_machine::{TrieBackend, TrieBackendStorage};
+use sp_trie::DBValue;
+use std::sync::Arc;
 
 pub fn prove_execution<
 	Block: BlockT,
@@ -54,7 +54,7 @@ pub fn prove_execution<
 	Exec: CodeExecutor + 'static,
 	Spawn: SpawnNamed + Send + 'static,
 >(
-	backend: &B,
+	backend: &Arc<B>,
 	executor: &Exec,
 	spawn_handle: Spawn,
 	at: &BlockId<Block>,
@@ -83,4 +83,50 @@ pub fn prove_execution<
 		&runtime_code,
 	)
 	.map_err(Into::into)
+}
+
+/// Create a new trie backend with memory DB delta changes.
+///
+/// This can be used to verify any extrinsic-specific execution on the combined state of `backend`
+/// and `delta`.
+pub fn create_delta_backend<
+	'a,
+	S: 'a + TrieBackendStorage<H>,
+	H: 'a + Hasher,
+	DB: HashDB<H, DBValue>,
+>(
+	backend: &'a TrieBackend<S, H>,
+	delta: DB,
+	post_delta_root: H::Out,
+) -> TrieBackend<DeltaBackend<'a, S, H, DB>, H>
+where
+	H::Out: Codec,
+{
+	let essence = backend.essence();
+	let delta_backend = DeltaBackend {
+		backend: essence.backend_storage(),
+		delta,
+		_phantom: sp_std::marker::PhantomData::<H>,
+	};
+	TrieBackend::new(delta_backend, post_delta_root)
+}
+
+pub struct DeltaBackend<'a, S: 'a + TrieBackendStorage<H>, H: 'a + Hasher, DB: HashDB<H, DBValue>> {
+	backend: &'a S,
+	/// Pending changes to the backend.
+	delta: DB,
+	_phantom: sp_std::marker::PhantomData<H>,
+}
+
+impl<'a, S: 'a + TrieBackendStorage<H>, H: 'a + Hasher, DB: HashDB<H, DBValue>>
+	TrieBackendStorage<H> for DeltaBackend<'a, S, H, DB>
+{
+	type Overlay = S::Overlay;
+
+	fn get(&self, key: &H::Out, prefix: Prefix) -> Result<Option<DBValue>, String> {
+		match HashDB::get(&self.delta, key, prefix) {
+			Some(v) => Ok(Some(v)),
+			None => Ok(self.backend.get(key, prefix)?),
+		}
+	}
 }
