@@ -1,12 +1,13 @@
 use cirrus_block_builder::{BlockBuilder, RecordProof};
-use cirrus_primitives::Hash;
+use cirrus_primitives::{Hash, SecondaryApi};
 use cirrus_test_service::{
 	run_primary_chain_validator_node,
 	runtime::Block,
 	Keyring::{Alice, Charlie, Dave},
 };
-use codec::Decode;
+use codec::{Decode, Encode};
 use sc_client_api::HeaderBackend;
+use sp_api::ProvideRuntimeApi;
 use sp_runtime::{
 	generic::BlockId,
 	traits::{BlakeTwo256, HashFor, Header as HeaderT},
@@ -146,7 +147,7 @@ async fn test_fraud_proof() {
 	};
 
 	// Index of the extrinsic to proof.
-	for target_extrinsic_index in 0..test_txs.len() {
+	for (target_extrinsic_index, xt) in test_txs.clone().into_iter().enumerate() {
 		let parent_state = charlie
 			.client
 			.state_at(&BlockId::Hash(parent_header.hash()))
@@ -168,9 +169,16 @@ async fn test_fraud_proof() {
 		let delta = storage_changes.transaction;
 		let post_delta_root = storage_changes.transaction_storage_root;
 
-		let storage_proof = block_builder
-			.create_execution_proof(target_extrinsic_index, delta, post_delta_root)
-			.expect("Create execution proof");
+		let storage_proof = cirrus_fraud_proof::prove_execution(
+			&charlie.backend,
+			&*charlie.code_executor,
+			charlie.task_manager.spawn_handle(),
+			&BlockId::Hash(parent_header.hash()),
+			"BlockBuilder_apply_extrinsic",
+			&xt.encode(),
+			Some((delta, post_delta_root)),
+		)
+		.expect("Create extrinsic execution proof");
 
 		let intermediate_roots = charlie
 			.client
@@ -194,14 +202,17 @@ async fn test_fraud_proof() {
 			.into_compact_proof::<BlakeTwo256>(post_delta_root)
 			.expect("Convert storage proof to compact proof");
 
-		let mut block_builder = create_block_builder();
-		let _execution_result = block_builder
-			.verify_execution_proof(storage_proof.clone(), target_extrinsic_index, post_delta_root)
-			.expect("Verify execution proof");
-
-		let execution_result = block_builder
-			.verify_execution_proof_new(storage_proof, target_extrinsic_index, post_delta_root)
-			.expect("Verify execution proof");
+		let execution_result = cirrus_fraud_proof::check_execution_proof(
+			post_delta_root,
+			storage_proof,
+			&charlie.backend,
+			&*charlie.code_executor,
+			charlie.task_manager.spawn_handle(),
+			&BlockId::Hash(parent_header.hash()),
+			"SecondaryApi_apply_extrinsic_with_post_state_root",
+			&xt.encode(),
+		)
+		.expect("Check extrinsic execution proof");
 
 		let post_execution_root = Hash::decode(&mut &execution_result.as_slice()[1..]).unwrap();
 		println!("Post execution root: {:?}", post_execution_root);

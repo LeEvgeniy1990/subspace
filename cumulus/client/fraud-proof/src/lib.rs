@@ -61,7 +61,7 @@ pub fn prove_execution<
 	method: &str,
 	call_data: &[u8],
 	delta_changes: Option<(sp_trie::PrefixedMemoryDB<HashFor<Block>>, Block::Hash)>,
-) -> sp_blockchain::Result<(Vec<u8>, StorageProof)> {
+) -> sp_blockchain::Result<StorageProof> {
 	let state = backend.state_at(*at)?;
 
 	let trie_backend = state.as_trie_backend().ok_or_else(|| {
@@ -85,6 +85,7 @@ pub fn prove_execution<
 			call_data,
 			&runtime_code,
 		)
+		.map(|(_ret, proof)| proof)
 		.map_err(Into::into)
 	} else {
 		sp_state_machine::prove_execution_on_trie_backend(
@@ -96,6 +97,7 @@ pub fn prove_execution<
 			call_data,
 			&runtime_code,
 		)
+		.map(|(_ret, proof)| proof)
 		.map_err(Into::into)
 	}
 }

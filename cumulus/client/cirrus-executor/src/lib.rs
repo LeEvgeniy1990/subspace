@@ -327,15 +327,16 @@ where
 			)
 			.expect("Convert to storage changes");
 
-		let (_result, execution_proof) = cirrus_fraud_proof::prove_execution(
+		// TODO: Convert storage_changes to delta.
+		let execution_proof = cirrus_fraud_proof::prove_execution(
 			&self.backend,
 			&*self.code_executor,
 			self.spawner.clone() as Box<dyn SpawnNamed>,
 			&BlockId::Hash(parent_hash),
 			"BlockBuilder_apply_extrinsic",
 			&encoded_extrinsic,
-            None,
-			// Some((delta, post_delta_root)), // TODO
+			None,
+			// Some((delta, post_delta_root)),
 		)?;
 
 		Ok(execution_proof)

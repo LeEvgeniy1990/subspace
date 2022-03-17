@@ -57,6 +57,9 @@ pub type WrapAnnounceBlockFn = Arc<dyn Fn(Hash, Option<Vec<u8>>) + Send + Sync>;
 /// The backend type used by the test service.
 pub type Backend = TFullBackend<Block>;
 
+/// NativeElseWasmExecutor for the test service.
+pub type CodeExecutor = sc_executor::NativeElseWasmExecutor<RuntimeExecutor>;
+
 /// Native executor instance.
 pub struct RuntimeExecutor;
 
@@ -151,6 +154,7 @@ async fn start_node_impl<RB>(
 	TaskManager,
 	Arc<Client>,
 	Arc<Backend>,
+	Arc<CodeExecutor>,
 	Arc<NetworkService<Block, H256>>,
 	RpcHandlers,
 )>
@@ -255,6 +259,8 @@ where
 		))
 	};
 
+	let code_executor = Arc::new(executor);
+
 	let params = StartExecutorParams {
 		announce_block,
 		client: client.clone(),
@@ -267,7 +273,7 @@ where
 		network: network.clone(),
 		backend: backend.clone(),
 		create_inherent_data_providers: Arc::new(move |_, _relay_parent| async move { Ok(()) }),
-		code_executor: Arc::new(executor),
+		code_executor: code_executor.clone(),
 		is_authority: validator,
 	};
 
@@ -275,7 +281,7 @@ where
 
 	start_network.start_network();
 
-	Ok((task_manager, client, backend, network, rpc_handlers))
+	Ok((task_manager, client, backend, code_executor, network, rpc_handlers))
 }
 
 /// A Cumulus test node instance used for testing.
@@ -286,6 +292,8 @@ pub struct TestNode {
 	pub client: Arc<Client>,
 	/// Client backend.
 	pub backend: Arc<Backend>,
+	/// Code executor.
+	pub code_executor: Arc<CodeExecutor>,
 	/// Node's network.
 	pub network: Arc<NetworkService<Block, H256>>,
 	/// The `MultiaddrWithPeerId` to this node. This is useful if you want to pass it as "boot node"
@@ -432,20 +440,21 @@ impl TestNodeBuilder {
 			format!("{} (primary chain)", relay_chain_config.network.node_name);
 
 		let multiaddr = parachain_config.network.listen_addresses[0].clone();
-		let (task_manager, client, backend, network, rpc_handlers) = start_node_impl(
-			parachain_config,
-			self.collator_key,
-			relay_chain_config,
-			self.wrap_announce_block,
-			|_| Ok(Default::default()),
-		)
-		.await
-		.expect("could not create Cumulus test service");
+		let (task_manager, client, backend, code_executor, network, rpc_handlers) =
+			start_node_impl(
+				parachain_config,
+				self.collator_key,
+				relay_chain_config,
+				self.wrap_announce_block,
+				|_| Ok(Default::default()),
+			)
+			.await
+			.expect("could not create Cumulus test service");
 
 		let peer_id = *network.local_peer_id();
 		let addr = MultiaddrWithPeerId { multiaddr, peer_id };
 
-		TestNode { task_manager, client, backend, network, addr, rpc_handlers }
+		TestNode { task_manager, client, backend, code_executor, network, addr, rpc_handlers }
 	}
 }
 
