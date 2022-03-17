@@ -53,6 +53,7 @@ pub fn prove_execution<
 	B: backend::Backend<Block>,
 	Exec: CodeExecutor + 'static,
 	Spawn: SpawnNamed + Send + 'static,
+	DB: HashDB<HashFor<Block>, DBValue>,
 >(
 	backend: &Arc<B>,
 	executor: &Exec,
@@ -60,7 +61,7 @@ pub fn prove_execution<
 	at: &BlockId<Block>,
 	method: &str,
 	call_data: &[u8],
-	delta_changes: Option<(sp_trie::PrefixedMemoryDB<HashFor<Block>>, Block::Hash)>,
+	delta_changes: Option<(DB, Block::Hash)>,
 ) -> sp_blockchain::Result<StorageProof> {
 	let state = backend.state_at(*at)?;
 

@@ -35,71 +35,71 @@ members = [
 ]
 
 [patch."https://github.com/paritytech/substrate"]
-sc-block-builder = { git = "https://github.com/subspace/substrate", rev = "74824b2ef35de5b07334c232a5ae52097f6acf48" }
-sc-chain-spec = { git = "https://github.com/subspace/substrate", rev = "74824b2ef35de5b07334c232a5ae52097f6acf48" }
-sc-cli = { git = "https://github.com/subspace/substrate", rev = "74824b2ef35de5b07334c232a5ae52097f6acf48" }
-sc-client-api = { git = "https://github.com/subspace/substrate", rev = "74824b2ef35de5b07334c232a5ae52097f6acf48" }
-sc-client-db = { git = "https://github.com/subspace/substrate", rev = "74824b2ef35de5b07334c232a5ae52097f6acf48" }
-sc-consensus = { git = "https://github.com/subspace/substrate", rev = "74824b2ef35de5b07334c232a5ae52097f6acf48" }
-sc-consensus-slots = { git = "https://github.com/subspace/substrate", rev = "74824b2ef35de5b07334c232a5ae52097f6acf48" }
-sc-consensus-uncles = { git = "https://github.com/subspace/substrate", rev = "74824b2ef35de5b07334c232a5ae52097f6acf48" }
-sc-executor = { git = "https://github.com/subspace/substrate", rev = "74824b2ef35de5b07334c232a5ae52097f6acf48" }
-sc-informant = { git = "https://github.com/subspace/substrate", rev = "74824b2ef35de5b07334c232a5ae52097f6acf48" }
-sc-keystore = { git = "https://github.com/subspace/substrate", rev = "74824b2ef35de5b07334c232a5ae52097f6acf48" }
-sc-network = { git = "https://github.com/subspace/substrate", rev = "74824b2ef35de5b07334c232a5ae52097f6acf48" }
-sc-network-gossip = { git = "https://github.com/subspace/substrate", rev = "74824b2ef35de5b07334c232a5ae52097f6acf48" }
-sc-offchain = { git = "https://github.com/subspace/substrate", rev = "74824b2ef35de5b07334c232a5ae52097f6acf48" }
-sc-rpc = { git = "https://github.com/subspace/substrate", rev = "74824b2ef35de5b07334c232a5ae52097f6acf48" }
-sc-rpc-api = { git = "https://github.com/subspace/substrate", rev = "74824b2ef35de5b07334c232a5ae52097f6acf48" }
-sc-service = { git = "https://github.com/subspace/substrate", rev = "74824b2ef35de5b07334c232a5ae52097f6acf48" }
-sc-telemetry = { git = "https://github.com/subspace/substrate", rev = "74824b2ef35de5b07334c232a5ae52097f6acf48" }
-sc-tracing = { git = "https://github.com/subspace/substrate", rev = "74824b2ef35de5b07334c232a5ae52097f6acf48" }
-sc-transaction-pool = { git = "https://github.com/subspace/substrate", rev = "74824b2ef35de5b07334c232a5ae52097f6acf48" }
-sc-transaction-pool-api = { git = "https://github.com/subspace/substrate", rev = "74824b2ef35de5b07334c232a5ae52097f6acf48" }
+sc-block-builder = { path = "/home/xlc/src/github.com/subspace/substrate/client/block-builder" }
+sc-chain-spec = { path = "/home/xlc/src/github.com/subspace/substrate/client/chain-spec" }
+sc-cli = { path = "/home/xlc/src/github.com/subspace/substrate/client/cli" }
+sc-client-api = { path = "/home/xlc/src/github.com/subspace/substrate/client/api" }
+sc-client-db = { path = "/home/xlc/src/github.com/subspace/substrate/client/db" }
+sc-consensus = { path = "/home/xlc/src/github.com/subspace/substrate/client/consensus/common" }
+sc-consensus-slots = { path = "/home/xlc/src/github.com/subspace/substrate/client/consensus/slots" }
+sc-consensus-uncles = { path = "/home/xlc/src/github.com/subspace/substrate/client/consensus/uncles" }
+sc-executor = { path = "/home/xlc/src/github.com/subspace/substrate/client/executor" }
+sc-informant = { path = "/home/xlc/src/github.com/subspace/substrate/client/informant" }
+sc-keystore = { path = "/home/xlc/src/github.com/subspace/substrate/client/keystore" }
+sc-network = { path = "/home/xlc/src/github.com/subspace/substrate/client/network" }
+sc-network-gossip = { path = "/home/xlc/src/github.com/subspace/substrate/client/network-gossip" }
+sc-offchain = { path = "/home/xlc/src/github.com/subspace/substrate/client/offchain" }
+sc-rpc = { path = "/home/xlc/src/github.com/subspace/substrate/client/rpc" }
+sc-rpc-api = { path = "/home/xlc/src/github.com/subspace/substrate/client/rpc-api" }
+sc-service = { path = "/home/xlc/src/github.com/subspace/substrate/client/service" }
+sc-telemetry = { path = "/home/xlc/src/github.com/subspace/substrate/client/telemetry" }
+sc-tracing = { path = "/home/xlc/src/github.com/subspace/substrate/client/tracing" }
+sc-transaction-pool = { path = "/home/xlc/src/github.com/subspace/substrate/client/transaction-pool" }
+sc-transaction-pool-api = { path = "/home/xlc/src/github.com/subspace/substrate/client/transaction-pool/api" }
 
-sp-api = { git = "https://github.com/subspace/substrate", rev = "74824b2ef35de5b07334c232a5ae52097f6acf48" }
-sp-application-crypto = { git = "https://github.com/subspace/substrate", rev = "74824b2ef35de5b07334c232a5ae52097f6acf48" }
-sp-arithmetic = { git = "https://github.com/subspace/substrate", rev = "74824b2ef35de5b07334c232a5ae52097f6acf48" }
-sp-block-builder = { git = "https://github.com/subspace/substrate", rev = "74824b2ef35de5b07334c232a5ae52097f6acf48" }
-sp-blockchain = { git = "https://github.com/subspace/substrate", rev = "74824b2ef35de5b07334c232a5ae52097f6acf48" }
-sp-consensus = { git = "https://github.com/subspace/substrate", rev = "74824b2ef35de5b07334c232a5ae52097f6acf48" }
-sp-consensus-slots = { git = "https://github.com/subspace/substrate", rev = "74824b2ef35de5b07334c232a5ae52097f6acf48" }
-sp-core = { git = "https://github.com/subspace/substrate", rev = "74824b2ef35de5b07334c232a5ae52097f6acf48" }
-sp-externalities = { git = "https://github.com/subspace/substrate", rev = "74824b2ef35de5b07334c232a5ae52097f6acf48" }
-sp-inherents = { git = "https://github.com/subspace/substrate", rev = "74824b2ef35de5b07334c232a5ae52097f6acf48" }
-sp-io = { git = "https://github.com/subspace/substrate", rev = "74824b2ef35de5b07334c232a5ae52097f6acf48" }
-sp-keystore = { git = "https://github.com/subspace/substrate", rev = "74824b2ef35de5b07334c232a5ae52097f6acf48" }
-sp-keyring = { git = "https://github.com/subspace/substrate", rev = "74824b2ef35de5b07334c232a5ae52097f6acf48" }
-sp-offchain = { git = "https://github.com/subspace/substrate", rev = "74824b2ef35de5b07334c232a5ae52097f6acf48" }
-sp-rpc = { git = "https://github.com/subspace/substrate", rev = "74824b2ef35de5b07334c232a5ae52097f6acf48" }
-sp-runtime = { git = "https://github.com/subspace/substrate", rev = "74824b2ef35de5b07334c232a5ae52097f6acf48" }
-sp-runtime-interface = { git = "https://github.com/subspace/substrate", rev = "74824b2ef35de5b07334c232a5ae52097f6acf48" }
-sp-session = { git = "https://github.com/subspace/substrate", rev = "74824b2ef35de5b07334c232a5ae52097f6acf48" }
-sp-state-machine = { git = "https://github.com/subspace/substrate", rev = "74824b2ef35de5b07334c232a5ae52097f6acf48" }
-sp-std = { git = "https://github.com/subspace/substrate", rev = "74824b2ef35de5b07334c232a5ae52097f6acf48" }
-sp-storage = { git = "https://github.com/subspace/substrate", rev = "74824b2ef35de5b07334c232a5ae52097f6acf48" }
-sp-timestamp = { git = "https://github.com/subspace/substrate", rev = "74824b2ef35de5b07334c232a5ae52097f6acf48" }
-sp-tracing = { git = "https://github.com/subspace/substrate", rev = "74824b2ef35de5b07334c232a5ae52097f6acf48" }
-sp-transaction-pool = { git = "https://github.com/subspace/substrate", rev = "74824b2ef35de5b07334c232a5ae52097f6acf48" }
-sp-trie = { git = "https://github.com/subspace/substrate", rev = "74824b2ef35de5b07334c232a5ae52097f6acf48" }
-sp-version = { git = "https://github.com/subspace/substrate", rev = "74824b2ef35de5b07334c232a5ae52097f6acf48" }
+sp-api = { path = "/home/xlc/src/github.com/subspace/substrate/primitives/api" }
+sp-application-crypto = { path = "/home/xlc/src/github.com/subspace/substrate/primitives/application-crypto" }
+sp-arithmetic = { path = "/home/xlc/src/github.com/subspace/substrate/primitives/arithmetic" }
+sp-block-builder = { path = "/home/xlc/src/github.com/subspace/substrate/primitives/block-builder" }
+sp-blockchain = { path = "/home/xlc/src/github.com/subspace/substrate/primitives/blockchain" }
+sp-consensus = { path = "/home/xlc/src/github.com/subspace/substrate/primitives/consensus/common" }
+sp-consensus-slots = { path = "/home/xlc/src/github.com/subspace/substrate/primitives/consensus/slots" }
+sp-core = { path = "/home/xlc/src/github.com/subspace/substrate/primitives/core" }
+sp-externalities = { path = "/home/xlc/src/github.com/subspace/substrate/primitives/externalities" }
+sp-inherents = { path = "/home/xlc/src/github.com/subspace/substrate/primitives/inherents" }
+sp-io = { path = "/home/xlc/src/github.com/subspace/substrate/primitives/io" }
+sp-keystore = { path = "/home/xlc/src/github.com/subspace/substrate/primitives/keystore" }
+sp-keyring = { path = "/home/xlc/src/github.com/subspace/substrate/primitives/keyring" }
+sp-offchain = { path = "/home/xlc/src/github.com/subspace/substrate/primitives/offchain" }
+sp-rpc = { path = "/home/xlc/src/github.com/subspace/substrate/primitives/rpc" }
+sp-runtime = { path = "/home/xlc/src/github.com/subspace/substrate/primitives/runtime" }
+sp-runtime-interface = { path = "/home/xlc/src/github.com/subspace/substrate/primitives/runtime-interface" }
+sp-session = { path = "/home/xlc/src/github.com/subspace/substrate/primitives/session" }
+sp-state-machine = { path = "/home/xlc/src/github.com/subspace/substrate/primitives/state-machine" }
+sp-std = { path = "/home/xlc/src/github.com/subspace/substrate/primitives/std" }
+sp-storage = { path = "/home/xlc/src/github.com/subspace/substrate/primitives/storage" }
+sp-timestamp = { path = "/home/xlc/src/github.com/subspace/substrate/primitives/timestamp" }
+sp-tracing = { path = "/home/xlc/src/github.com/subspace/substrate/primitives/tracing" }
+sp-transaction-pool = { path = "/home/xlc/src/github.com/subspace/substrate/primitives/transaction-pool" }
+sp-trie = { path = "/home/xlc/src/github.com/subspace/substrate/primitives/trie" }
+sp-version = { path = "/home/xlc/src/github.com/subspace/substrate/primitives/version" }
 
-frame-benchmarking-cli = { git = "https://github.com/subspace/substrate", rev = "74824b2ef35de5b07334c232a5ae52097f6acf48" }
-frame-executive = { git = "https://github.com/subspace/substrate", rev = "74824b2ef35de5b07334c232a5ae52097f6acf48" }
-frame-support = { git = "https://github.com/subspace/substrate", rev = "74824b2ef35de5b07334c232a5ae52097f6acf48" }
-frame-system = { git = "https://github.com/subspace/substrate", rev = "74824b2ef35de5b07334c232a5ae52097f6acf48" }
-frame-system-rpc-runtime-api = { git = "https://github.com/subspace/substrate", rev = "74824b2ef35de5b07334c232a5ae52097f6acf48" }
+frame-benchmarking-cli = { path = "/home/xlc/src/github.com/subspace/substrate/utils/frame/benchmarking-cli" }
+frame-executive = { path = "/home/xlc/src/github.com/subspace/substrate/frame/executive" }
+frame-support = { path = "/home/xlc/src/github.com/subspace/substrate/frame/support" }
+frame-system = { path = "/home/xlc/src/github.com/subspace/substrate/frame/system" }
+frame-system-rpc-runtime-api = { path = "/home/xlc/src/github.com/subspace/substrate/frame/system/rpc/runtime-api" }
 
-substrate-frame-rpc-system = { git = "https://github.com/subspace/substrate", rev = "74824b2ef35de5b07334c232a5ae52097f6acf48" }
+substrate-frame-rpc-system = { path = "/home/xlc/src/github.com/subspace/substrate/utils/frame/rpc/system" }
 
-pallet-balances = { git = "https://github.com/subspace/substrate", rev = "74824b2ef35de5b07334c232a5ae52097f6acf48" }
-pallet-session = { git = "https://github.com/subspace/substrate", rev = "74824b2ef35de5b07334c232a5ae52097f6acf48" }
-pallet-sudo = { git = "https://github.com/subspace/substrate", rev = "74824b2ef35de5b07334c232a5ae52097f6acf48" }
-pallet-timestamp = { git = "https://github.com/subspace/substrate", rev = "74824b2ef35de5b07334c232a5ae52097f6acf48" }
-pallet-transaction-payment = { git = "https://github.com/subspace/substrate", rev = "74824b2ef35de5b07334c232a5ae52097f6acf48" }
-pallet-transaction-payment-rpc = { git = "https://github.com/subspace/substrate", rev = "74824b2ef35de5b07334c232a5ae52097f6acf48" }
-pallet-transaction-payment-rpc-runtime-api = { git = "https://github.com/subspace/substrate", rev = "74824b2ef35de5b07334c232a5ae52097f6acf48" }
-pallet-utility = { git = "https://github.com/subspace/substrate", rev = "74824b2ef35de5b07334c232a5ae52097f6acf48" }
+pallet-balances = { path = "/home/xlc/src/github.com/subspace/substrate/frame/balances" }
+pallet-session = { path = "/home/xlc/src/github.com/subspace/substrate/frame/session" }
+pallet-sudo = { path = "/home/xlc/src/github.com/subspace/substrate/frame/sudo" }
+pallet-timestamp = { path = "/home/xlc/src/github.com/subspace/substrate/frame/timestamp" }
+pallet-transaction-payment = { path = "/home/xlc/src/github.com/subspace/substrate/frame/transaction-payment" }
+pallet-transaction-payment-rpc = { path = "/home/xlc/src/github.com/subspace/substrate/frame/transaction-payment/rpc" }
+pallet-transaction-payment-rpc-runtime-api = { path = "/home/xlc/src/github.com/subspace/substrate/frame/transaction-payment/rpc/runtime-api" }
+pallet-utility = { path = "/home/xlc/src/github.com/subspace/substrate/frame/utility" }
 
 # The list of dependencies below (which can be both direct and indirect dependencies) are crates
 # that are suspected to be CPU-intensive, and that are unlikely to require debugging (as some of
