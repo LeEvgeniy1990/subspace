@@ -48,13 +48,20 @@ pub use sp_block_builder::BlockBuilder as BlockBuilderApi;
 
 use sc_client_api::{backend, CallExecutor, ExecutorProvider};
 
-fn prove_execution(
-	&self,
+pub fn prove_execution<
+	Block: BlockT,
+	B: backend::Backend<Block>,
+	Exec: CodeExecutor + 'static,
+	Spawn: SpawnNamed + Send + 'static,
+>(
+	backend: &B,
+	executor: &Exec,
+	spawn_handle: Spawn,
 	at: &BlockId<Block>,
 	method: &str,
 	call_data: &[u8],
 ) -> sp_blockchain::Result<(Vec<u8>, StorageProof)> {
-	let state = self.backend.state_at(*at)?;
+	let state = backend.state_at(*at)?;
 
 	let trie_backend = state.as_trie_backend().ok_or_else(|| {
 		Box::new(sp_state_machine::ExecutionError::UnableToGenerateProof)
@@ -64,13 +71,13 @@ fn prove_execution(
 	let state_runtime_code = sp_state_machine::backend::BackendRuntimeCode::new(trie_backend);
 	let runtime_code =
 		state_runtime_code.runtime_code().map_err(sp_blockchain::Error::RuntimeCode)?;
-	let runtime_code = self.check_override(runtime_code, at)?;
+	// let runtime_code = self.check_override(runtime_code, at)?;
 
 	sp_state_machine::prove_execution_on_trie_backend(
 		&trie_backend,
 		&mut Default::default(),
-		&self.executor,
-		self.spawn_handle.clone(),
+		executor,
+		spawn_handle,
 		method,
 		call_data,
 		&runtime_code,
