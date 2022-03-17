@@ -60,6 +60,7 @@ version = "0.10.0"
 
 [dev-dependencies]
 cirrus-test-service = { path = "../../test/service" }
+pallet-balances = { git = "https://github.com/paritytech/substrate", rev = "e6def65920d30029e42d498cb07cec5dd433b927" }
 sc-cli = { git = "https://github.com/paritytech/substrate", rev = "e6def65920d30029e42d498cb07cec5dd433b927" }
 sp-keyring = { git = "https://github.com/paritytech/substrate", rev = "e6def65920d30029e42d498cb07cec5dd433b927" }
 substrate-test-runtime = { path = "../../../substrate/substrate-test-runtime" }

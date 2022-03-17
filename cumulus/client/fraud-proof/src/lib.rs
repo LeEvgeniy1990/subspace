@@ -41,7 +41,7 @@ use sp_core::{
 };
 use sp_runtime::{
 	generic::BlockId,
-	traits::{Block as BlockT, Hash, HashFor, Header as HeaderT, NumberFor, One},
+	traits::{BlakeTwo256, Block as BlockT, Hash, HashFor, Header as HeaderT, NumberFor, One},
 	Digest,
 };
 use sp_state_machine::{TrieBackend, TrieBackendStorage};
@@ -60,6 +60,7 @@ pub fn prove_execution<
 	at: &BlockId<Block>,
 	method: &str,
 	call_data: &[u8],
+	delta_changes: Option<(sp_trie::PrefixedMemoryDB<HashFor<Block>>, Block::Hash)>,
 ) -> sp_blockchain::Result<(Vec<u8>, StorageProof)> {
 	let state = backend.state_at(*at)?;
 
@@ -73,8 +74,61 @@ pub fn prove_execution<
 		state_runtime_code.runtime_code().map_err(sp_blockchain::Error::RuntimeCode)?;
 	// let runtime_code = self.check_override(runtime_code, at)?;
 
-	sp_state_machine::prove_execution_on_trie_backend(
-		&trie_backend,
+	if let Some((delta, post_delta_root)) = delta_changes {
+		let delta_backend = create_delta_backend(trie_backend, delta, post_delta_root);
+		sp_state_machine::prove_execution_on_trie_backend(
+			&delta_backend,
+			&mut Default::default(),
+			executor,
+			spawn_handle,
+			method,
+			call_data,
+			&runtime_code,
+		)
+		.map_err(Into::into)
+	} else {
+		sp_state_machine::prove_execution_on_trie_backend(
+			&trie_backend,
+			&mut Default::default(),
+			executor,
+			spawn_handle,
+			method,
+			call_data,
+			&runtime_code,
+		)
+		.map_err(Into::into)
+	}
+}
+
+pub fn check_execution_proof<
+	Block: BlockT,
+	B: backend::Backend<Block>,
+	Exec: CodeExecutor + 'static,
+	Spawn: SpawnNamed + Send + 'static,
+>(
+	root: sp_core::H256,
+	proof: StorageProof,
+	backend: &Arc<B>,
+	executor: &Exec,
+	spawn_handle: Spawn,
+	at: &BlockId<Block>,
+	method: &str,
+	call_data: &[u8],
+) -> sp_blockchain::Result<Vec<u8>> {
+	let state = backend.state_at(*at)?;
+
+	let trie_backend = state.as_trie_backend().ok_or_else(|| {
+		Box::new(sp_state_machine::ExecutionError::UnableToGenerateProof)
+			as Box<dyn sp_state_machine::Error>
+	})?;
+
+	let state_runtime_code = sp_state_machine::backend::BackendRuntimeCode::new(trie_backend);
+	let runtime_code =
+		state_runtime_code.runtime_code().map_err(sp_blockchain::Error::RuntimeCode)?;
+
+	sp_state_machine::execution_proof_check::<BlakeTwo256, _, _>(
+		root,
+		proof,
 		&mut Default::default(),
 		executor,
 		spawn_handle,
@@ -89,12 +143,7 @@ pub fn prove_execution<
 ///
 /// This can be used to verify any extrinsic-specific execution on the combined state of `backend`
 /// and `delta`.
-pub fn create_delta_backend<
-	'a,
-	S: 'a + TrieBackendStorage<H>,
-	H: 'a + Hasher,
-	DB: HashDB<H, DBValue>,
->(
+fn create_delta_backend<'a, S: 'a + TrieBackendStorage<H>, H: 'a + Hasher, DB: HashDB<H, DBValue>>(
 	backend: &'a TrieBackend<S, H>,
 	delta: DB,
 	post_delta_root: H::Out,
@@ -111,7 +160,7 @@ where
 	TrieBackend::new(delta_backend, post_delta_root)
 }
 
-pub struct DeltaBackend<'a, S: 'a + TrieBackendStorage<H>, H: 'a + Hasher, DB: HashDB<H, DBValue>> {
+struct DeltaBackend<'a, S: 'a + TrieBackendStorage<H>, H: 'a + Hasher, DB: HashDB<H, DBValue>> {
 	backend: &'a S,
 	/// Pending changes to the backend.
 	delta: DB,

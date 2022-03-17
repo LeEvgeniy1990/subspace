@@ -334,6 +334,7 @@ where
 			&BlockId::Hash(parent_hash),
 			"BlockBuilder_apply_extrinsic",
 			&encoded_extrinsic,
+            None,
 			// Some((delta, post_delta_root)), // TODO
 		)?;
 
