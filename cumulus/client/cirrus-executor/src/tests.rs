@@ -262,4 +262,57 @@ async fn test_fraud_proof() {
 		println!("Post execution root: {:?}", post_execution_root);
 		assert_eq!(post_execution_root, intermediate_roots[target_extrinsic_index + 1].into());
 	}
+
+	// finalize_block
+	let mut block_builder = create_block_builder();
+	let overlayed_changes = block_builder
+		.prepare_overlay_before_finalize_block()
+		.expect("Failed to get overlayed changes");
+
+	let parent_state = charlie
+		.client
+		.state_at(&BlockId::Hash(parent_header.hash()))
+		.expect("Get parent state");
+
+	let storage_changes = overlayed_changes
+		.into_storage_changes(
+			&parent_state,
+			best_hash, // unused.
+			Default::default(),
+			sp_core::storage::StateVersion::V1,
+		)
+		.expect("Failed to convert `OverlayedChanges` to `StorageChanges`");
+
+	let delta = storage_changes.transaction;
+	let post_delta_root = storage_changes.transaction_storage_root;
+
+	assert_eq!(post_delta_root, intermediate_roots.last().unwrap().into());
+
+	let storage_proof = cirrus_fraud_proof::prove_execution(
+		&charlie.backend,
+		&*charlie.code_executor,
+		charlie.task_manager.spawn_handle(),
+		&BlockId::Hash(parent_header.hash()),
+		"BlockBuilder_finalize_block",
+		Default::default(),
+		Some((delta, post_delta_root)),
+	)
+	.expect("Create extrinsic execution proof");
+
+	let execution_result = cirrus_fraud_proof::check_execution_proof(
+		post_delta_root,
+		storage_proof,
+		&charlie.backend,
+		&*charlie.code_executor,
+		charlie.task_manager.spawn_handle(),
+		&BlockId::Hash(parent_header.hash()),
+		"BlockBuilder_finalize_block",
+		Default::default(),
+	)
+	.expect("Check `finalize_block` proof");
+
+	let new_header = Header::decode(&mut execution_result.as_slice()).unwrap();
+	let post_execution_root = *new_header.state_root();
+	println!("Post `finalize_block` root: {:?}", post_execution_root);
+	assert_eq!(post_execution_root, *header.state_root());
 }

@@ -257,6 +257,11 @@ where
 		))))
 	}
 
+	pub fn prepare_overlay_before_finalize_block(&self) -> Result<sp_api::OverlayedChanges, Error> {
+		self.execute_extrinsics()?;
+		Ok(self.api.overlay().into_inner())
+	}
+
 	/// Consume the builder to build a valid `Block` containing all pushed extrinsics.
 	///
 	/// Returns the build `Block`, the changes to the storage and an optional `StorageProof`

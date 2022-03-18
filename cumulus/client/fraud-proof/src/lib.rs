@@ -109,7 +109,7 @@ pub fn check_execution_proof<
 	Exec: CodeExecutor + 'static,
 	Spawn: SpawnNamed + Send + 'static,
 >(
-	root: sp_core::H256,
+	pre_execution_root: sp_core::H256,
 	proof: StorageProof,
 	backend: &Arc<B>,
 	executor: &Exec,
@@ -130,7 +130,7 @@ pub fn check_execution_proof<
 		state_runtime_code.runtime_code().map_err(sp_blockchain::Error::RuntimeCode)?;
 
 	sp_state_machine::execution_proof_check::<BlakeTwo256, _, _>(
-		root,
+		pre_execution_root,
 		proof,
 		&mut Default::default(),
 		executor,
