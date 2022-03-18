@@ -2,7 +2,7 @@ use cirrus_block_builder::{BlockBuilder, RecordProof};
 use cirrus_primitives::{Hash, SecondaryApi};
 use cirrus_test_service::{
 	run_primary_chain_validator_node,
-	runtime::Block,
+	runtime::{Block, Header},
 	Keyring::{Alice, Charlie, Dave},
 };
 use codec::{Decode, Encode};
@@ -145,6 +145,49 @@ async fn test_fraud_proof() {
 		block_builder.set_extrinsics(test_txs.clone().into_iter().map(Into::into).collect());
 		block_builder
 	};
+
+	let header = Header::new(
+		*header.number(),
+		Default::default(),
+		Default::default(),
+		parent_header.hash(),
+		Default::default(),
+	);
+
+	let storage_proof =
+		cirrus_fraud_proof::prove_execution::<_, _, _, _, sp_trie::PrefixedMemoryDB<BlakeTwo256>>(
+			&charlie.backend,
+			&*charlie.code_executor,
+			charlie.task_manager.spawn_handle(),
+			&BlockId::Hash(parent_header.hash()),
+			"SecondaryApi_initialize_block_with_post_state_root",
+			&header.encode(),
+			None,
+		)
+		.expect("Create `initialize_block` proof");
+
+	let intermediate_roots = charlie
+		.client
+		.runtime_api()
+		.intermediate_roots(&BlockId::Hash(best_hash))
+		.expect("Get intermediate roots");
+
+	let execution_result = cirrus_fraud_proof::check_execution_proof(
+		*parent_header.state_root(),
+		storage_proof,
+		&charlie.backend,
+		&*charlie.code_executor,
+		charlie.task_manager.spawn_handle(),
+		&BlockId::Hash(parent_header.hash()),
+		"SecondaryApi_initialize_block_with_post_state_root",
+		&header.encode(),
+	)
+	.expect("Check `initialize_block` proof");
+
+	let res = Vec::<u8>::decode(&mut execution_result.as_slice()).unwrap();
+	let post_execution_root = Hash::decode(&mut res.as_slice()).unwrap();
+	println!("Post `initialize_block` root: {:?}", post_execution_root);
+	assert_eq!(post_execution_root, intermediate_roots[0].into());
 
 	// Index of the extrinsic to proof.
 	for (target_extrinsic_index, xt) in test_txs.clone().into_iter().enumerate() {

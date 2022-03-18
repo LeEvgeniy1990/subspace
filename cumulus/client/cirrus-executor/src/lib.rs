@@ -24,6 +24,7 @@ mod processor;
 #[cfg(test)]
 mod tests;
 
+use cirrus_block_builder::{BlockBuilder, RecordProof};
 use codec::{Decode, Encode};
 use sc_client_api::{AuxStore, BlockBackend};
 use sc_utils::mpsc::TracingUnboundedSender;
@@ -299,8 +300,6 @@ where
 		parent_hash: Block::Hash,
 		current_hash: Block::Hash,
 	) -> Result<StorageProof, GossipMessageError> {
-		use cirrus_block_builder::{BlockBuilder, RecordProof};
-
 		let mut block_builder = BlockBuilder::new(
 			&*self.client,
 			parent_hash,
@@ -605,6 +604,26 @@ where
 				// `initialize_block` execution proof.
 				let pre_state_root = as_h256(parent_header.state_root())?;
 				let post_state_root = as_h256(&execution_receipt.trace[0])?;
+
+				/*
+				let header = <<Block as BlockT>::Header as HeaderT>::new(
+					*header.number(),
+					Default::default(),
+					Default::default(),
+					parent_header.hash(),
+					Default::default(),
+				);
+
+				let execution_proof = cirrus_fraud_proof::prove_execution(
+					&self.backend,
+					&*self.code_executor,
+					self.spawner.clone() as Box<dyn SpawnNamed>,
+					&BlockId::Hash(parent_header.hash()),
+					"SecondaryApi_initialize_block_with_post_state_root",
+					&header.encode(),
+					None,
+				)?;
+				*/
 
 				let proof = unimplemented!("TODO: proof `initialize_block`");
 

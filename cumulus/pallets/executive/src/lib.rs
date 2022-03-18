@@ -241,6 +241,14 @@ impl<
 		>::initialize_block(header);
 	}
 
+	/// Wrapped `frame_executive::Executive::initialize_block`.
+	///
+	/// Note the storage root in the end.
+	pub fn initialize_block_with_post_state_root(header: &System::Header) -> Vec<u8> {
+		Self::initialize_block(header);
+		Self::storage_root()
+	}
+
 	// TODO: https://github.com/paritytech/substrate/issues/10711
 	fn initial_checks(block: &Block) {
 		sp_tracing::enter_span!(sp_tracing::Level::TRACE, "initial_checks");
