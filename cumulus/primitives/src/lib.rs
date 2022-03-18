@@ -82,6 +82,7 @@ sp_api::decl_runtime_apis! {
 
 		fn initialize_block_with_post_state_root(header: &<Block as BlockT>::Header) -> Vec<u8>;
 
+		/// Returns the storage root after applying the extrinsic.
 		fn apply_extrinsic_with_post_state_root(extrinsic: <Block as BlockT>::Extrinsic) -> Vec<u8>;
 	}
 }

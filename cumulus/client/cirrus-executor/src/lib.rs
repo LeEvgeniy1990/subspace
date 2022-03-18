@@ -71,7 +71,7 @@ pub struct Executor<Block: BlockT, Client, TransactionPool, Backend, CIDP, E> {
 	// TODO: no longer used in executor, revisit this with ParachainBlockImport together.
 	parachain_consensus: Box<dyn ParachainConsensus<Block>>,
 	client: Arc<Client>,
-	spawner: Box<dyn SpawnNamed + Send + Sync + 'static>,
+	spawner: Box<dyn SpawnNamed + Send + Sync>,
 	overseer_handle: OverseerHandle,
 	transaction_pool: Arc<TransactionPool>,
 	bundle_sender: Arc<TracingUnboundedSender<Bundle<Block::Extrinsic>>>,

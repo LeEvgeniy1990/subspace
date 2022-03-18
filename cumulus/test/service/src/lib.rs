@@ -57,7 +57,7 @@ pub type WrapAnnounceBlockFn = Arc<dyn Fn(Hash, Option<Vec<u8>>) + Send + Sync>;
 /// The backend type used by the test service.
 pub type Backend = TFullBackend<Block>;
 
-/// NativeElseWasmExecutor for the test service.
+/// Code executor for the test service.
 pub type CodeExecutor = sc_executor::NativeElseWasmExecutor<RuntimeExecutor>;
 
 /// Native executor instance.
@@ -93,7 +93,7 @@ pub fn new_partial(
 		(),
 		sc_consensus::import_queue::BasicQueue<Block, PrefixedMemoryDB<BlakeTwo256>>,
 		sc_transaction_pool::FullPool<Block, Client>,
-		(),
+		CodeExecutor,
 	>,
 	sc_service::Error,
 > {
@@ -105,7 +105,7 @@ pub fn new_partial(
 	);
 
 	let (client, backend, keystore_container, task_manager) =
-		sc_service::new_full_parts::<Block, RuntimeApi, _>(config, None, executor)?;
+		sc_service::new_full_parts::<Block, RuntimeApi, _>(config, None, executor.clone())?;
 	let client = Arc::new(client);
 
 	let registry = config.prometheus_registry();
@@ -134,7 +134,7 @@ pub fn new_partial(
 		task_manager,
 		transaction_pool,
 		select_chain: (),
-		other: (),
+		other: (executor),
 	};
 
 	Ok(params)
@@ -259,8 +259,7 @@ where
 		))
 	};
 
-	let code_executor = Arc::new(executor);
-
+	let code_executor = Arc::new(params.other);
 	let params = StartExecutorParams {
 		announce_block,
 		client: client.clone(),

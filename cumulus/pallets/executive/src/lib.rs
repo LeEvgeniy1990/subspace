@@ -184,7 +184,7 @@ impl<
 	UnsignedValidator: ValidateUnsigned<Call = CallOf<Block::Extrinsic, Context>>,
 {
 	/// Returns the latest storage root.
-	fn storage_root() -> Vec<u8> {
+	pub fn storage_root() -> Vec<u8> {
 		let version = System::Version::get().state_version();
 		sp_io::storage::root(version)
 	}
@@ -239,14 +239,6 @@ impl<
 			AllPalletsWithSystem,
 			COnRuntimeUpgrade,
 		>::initialize_block(header);
-	}
-
-	/// Wrapped `frame_executive::Executive::initialize_block`.
-	///
-	/// Note the storage root in the end.
-	pub fn initialize_block_with_post_state_root(header: &System::Header) -> Vec<u8> {
-		Self::initialize_block(header);
-		Self::storage_root()
 	}
 
 	// TODO: https://github.com/paritytech/substrate/issues/10711
@@ -365,7 +357,7 @@ impl<
 			COnRuntimeUpgrade,
 		>::apply_extrinsic(uxt);
 
-		// TODO: https://github.com/paritytech/substrate/pull/10922#issuecomment-1068997467
+		// TODO: Critical!!! https://github.com/paritytech/substrate/pull/10922#issuecomment-1068997467
 		frame_support::log::info!(
 			target: "cirrus::runtime::executive",
 			"[apply_extrinsic] after: {:?}",
