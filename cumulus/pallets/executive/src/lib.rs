@@ -315,12 +315,6 @@ impl<
 			AllPalletsWithSystem,
 			COnRuntimeUpgrade,
 		>::finalize_block()
-		// NOTE: Somehow the executor will run into an error `state already discarded for ...`
-		// if we note the storage root after the origin `finalize_block`(This error might relate to
-		// the `execute_block`, but not for sure). Since we calculate the final state root anyway,
-		// this step can just be skipped.
-		//
-		// Pallet::<ExecutiveConfig>::push_root(Self::storage_root());
 	}
 
 	// TODO: https://github.com/paritytech/substrate/issues/10711
@@ -356,7 +350,6 @@ impl<
 			AllPalletsWithSystem,
 			COnRuntimeUpgrade,
 		>::apply_extrinsic(uxt);
-
 		// TODO: Critical!!! https://github.com/paritytech/substrate/pull/10922#issuecomment-1068997467
 		frame_support::log::info!(
 			target: "cirrus::runtime::executive",
@@ -366,14 +359,7 @@ impl<
 				Block::Hash::decode(&mut Self::storage_root().as_slice()).unwrap()
 			}
 		);
-
 		res
-	}
-
-	/// Variant of [`apply_extrinsic`] to return the storage root after applying the extrinsic.
-	pub fn apply_extrinsic_with_post_state_root(uxt: Block::Extrinsic) -> Vec<u8> {
-		let _ = Self::apply_extrinsic(uxt);
-		Self::storage_root()
 	}
 
 	// TODO: https://github.com/paritytech/substrate/issues/10711
