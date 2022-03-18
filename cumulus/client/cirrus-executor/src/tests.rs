@@ -214,7 +214,8 @@ async fn test_fraud_proof() {
 		)
 		.expect("Check extrinsic execution proof");
 
-		let post_execution_root = Hash::decode(&mut &execution_result.as_slice()[1..]).unwrap();
+		let res = Vec::<u8>::decode(&mut execution_result.as_slice()).unwrap();
+		let post_execution_root = Hash::decode(&mut res.as_slice()).unwrap();
 		println!("Post execution root: {:?}", post_execution_root);
 		assert_eq!(post_execution_root, intermediate_roots[target_extrinsic_index + 1].into());
 
