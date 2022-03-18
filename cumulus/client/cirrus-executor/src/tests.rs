@@ -146,25 +146,26 @@ async fn test_fraud_proof() {
 		block_builder
 	};
 
-	let header = Header::new(
-		*header.number(),
-		Default::default(),
-		Default::default(),
-		parent_header.hash(),
-		Default::default(),
-	);
+	let storage_proof = {
+		let new_header = Header::new(
+			*header.number(),
+			Default::default(),
+			Default::default(),
+			parent_header.hash(),
+			Default::default(),
+		);
 
-	let storage_proof =
 		cirrus_fraud_proof::prove_execution::<_, _, _, _, sp_trie::PrefixedMemoryDB<BlakeTwo256>>(
 			&charlie.backend,
 			&*charlie.code_executor,
 			charlie.task_manager.spawn_handle(),
 			&BlockId::Hash(parent_header.hash()),
 			"SecondaryApi_initialize_block_with_post_state_root",
-			&header.encode(),
+			&new_header.encode(),
 			None,
 		)
-		.expect("Create `initialize_block` proof");
+		.expect("Create `initialize_block` proof")
+	};
 
 	let intermediate_roots = charlie
 		.client
@@ -314,5 +315,6 @@ async fn test_fraud_proof() {
 	let new_header = Header::decode(&mut execution_result.as_slice()).unwrap();
 	let post_execution_root = *new_header.state_root();
 	println!("Post `finalize_block` root: {:?}", post_execution_root);
+	println!("header state root: {:?}", header.state_root());
 	assert_eq!(post_execution_root, *header.state_root());
 }
