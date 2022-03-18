@@ -37,7 +37,7 @@ use sp_core::{
 use sp_inherents::CreateInherentDataProviders;
 use sp_runtime::{
 	generic::BlockId,
-	traits::{Block as BlockT, Header as HeaderT, Zero},
+	traits::{Block as BlockT, HashFor, Header as HeaderT, Zero},
 };
 use sp_trie::StorageProof;
 
@@ -118,6 +118,9 @@ where
 		Error = sp_consensus::Error,
 	>,
 	Backend: sc_client_api::Backend<Block> + Send + Sync + 'static,
+	<<Backend as sc_client_api::Backend<Block>>::State as sc_client_api::backend::StateBackend<
+		HashFor<Block>,
+	>>::Transaction: sp_trie::HashDBT<HashFor<Block>, sp_trie::DBValue>,
 	TransactionPool: sc_transaction_pool_api::TransactionPool<Block = Block> + 'static,
 	CIDP: CreateInherentDataProviders<Block, Hash> + 'static,
 	E: CodeExecutor,
@@ -331,16 +334,15 @@ where
 		let post_delta_root = storage_changes.transaction_storage_root;
 
 		// TODO: Convert storage_changes to delta.
-		let execution_proof =
-			cirrus_fraud_proof::prove_execution(
-				&self.backend,
-				&*self.code_executor,
-				self.spawner.clone() as Box<dyn SpawnNamed>,
-				&BlockId::Hash(parent_hash),
-				"BlockBuilder_apply_extrinsic",
-				&encoded_extrinsic,
-				Some((delta, post_delta_root)),
-			)?;
+		let execution_proof = cirrus_fraud_proof::prove_execution(
+			&self.backend,
+			&*self.code_executor,
+			self.spawner.clone() as Box<dyn SpawnNamed>,
+			&BlockId::Hash(parent_hash),
+			"BlockBuilder_apply_extrinsic",
+			&encoded_extrinsic,
+			Some((delta, post_delta_root)),
+		)?;
 
 		Ok(execution_proof)
 	}
@@ -453,6 +455,9 @@ where
 		Error = sp_consensus::Error,
 	>,
 	Backend: sc_client_api::Backend<Block> + Send + Sync + 'static,
+	<<Backend as sc_client_api::Backend<Block>>::State as sc_client_api::backend::StateBackend<
+		HashFor<Block>,
+	>>::Transaction: sp_trie::HashDBT<HashFor<Block>, sp_trie::DBValue>,
 	TransactionPool: sc_transaction_pool_api::TransactionPool<Block = Block> + 'static,
 	CIDP: CreateInherentDataProviders<Block, Hash> + 'static,
 	E: CodeExecutor,
@@ -679,6 +684,9 @@ pub async fn start_executor<Block, Spawner, Client, TransactionPool, Backend, CI
 where
 	Block: BlockT,
 	Backend: sc_client_api::Backend<Block> + Send + Sync + 'static,
+	<<Backend as sc_client_api::Backend<Block>>::State as sc_client_api::backend::StateBackend<
+		HashFor<Block>,
+	>>::Transaction: sp_trie::HashDBT<HashFor<Block>, sp_trie::DBValue>,
 	Spawner: SpawnNamed + Clone + Send + Sync + 'static,
 	Client: HeaderBackend<Block>
 		+ BlockBackend<Block>
