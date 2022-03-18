@@ -933,6 +933,7 @@ dependencies = [
  "sp-core",
  "sp-inherents",
  "sp-runtime",
+ "sp-trie",
  "subspace-service",
  "tracing",
 ]

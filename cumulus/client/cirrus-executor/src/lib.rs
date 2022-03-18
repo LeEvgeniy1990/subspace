@@ -632,13 +632,6 @@ where
 				FraudProof { pre_state_root, post_state_root, proof }
 			};
 
-			// TODO: generate a fraud proof
-			let fraud_proof = FraudProof {
-				pre_state_root: sp_core::H256::random(),
-				post_state_root: sp_core::H256::random(),
-				proof: StorageProof::empty(),
-			};
-
 			self.submit_fraud_proof(fraud_proof);
 
 			Ok(Action::Empty)

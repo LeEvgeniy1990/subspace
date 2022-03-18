@@ -218,13 +218,5 @@ async fn test_fraud_proof() {
 		let post_execution_root = Hash::decode(&mut res.as_slice()).unwrap();
 		println!("Post execution root: {:?}", post_execution_root);
 		assert_eq!(post_execution_root, intermediate_roots[target_extrinsic_index + 1].into());
-
-		/* TODO: https://github.com/paritytech/substrate/issues/11046
-		use sp_core::{NativeOrEncoded, NeverNativeValue};
-		let proof_ret_value: NativeOrEncoded<sp_core::NeverNativeValue> =
-			Decode::decode(&mut execution_result.as_slice()).unwrap();
-		let execution_ret_value = proof_ret_value.into_encoded();
-		let post_execution_root = Hash::decode(&mut &execution_ret_value.as_slice()).unwrap();
-		*/
 	}
 }
