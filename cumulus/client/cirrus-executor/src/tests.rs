@@ -174,14 +174,14 @@ async fn test_fraud_proof() {
 		.expect("Get intermediate roots");
 
 	let execution_result = cirrus_fraud_proof::check_execution_proof(
-		*parent_header.state_root(),
-		storage_proof,
 		&charlie.backend,
 		&*charlie.code_executor,
 		charlie.task_manager.spawn_handle(),
 		&BlockId::Hash(parent_header.hash()),
 		"SecondaryApi_initialize_block_with_post_state_root",
 		&header.encode(),
+		*parent_header.state_root(),
+		storage_proof,
 	)
 	.expect("Check `initialize_block` proof");
 
@@ -234,14 +234,14 @@ async fn test_fraud_proof() {
 			.expect("Convert storage proof to compact proof");
 
 		let execution_result = cirrus_fraud_proof::check_execution_proof(
-			post_delta_root,
-			storage_proof,
 			&charlie.backend,
 			&*charlie.code_executor,
 			charlie.task_manager.spawn_handle(),
 			&BlockId::Hash(parent_header.hash()),
 			"SecondaryApi_apply_extrinsic_with_post_state_root",
 			&xt.encode(),
+			post_delta_root,
+			storage_proof,
 		)
 		.expect("Check extrinsic execution proof");
 
@@ -274,14 +274,14 @@ async fn test_fraud_proof() {
 	.expect("Create extrinsic execution proof");
 
 	let execution_result = cirrus_fraud_proof::check_execution_proof(
-		post_delta_root,
-		storage_proof,
 		&charlie.backend,
 		&*charlie.code_executor,
 		charlie.task_manager.spawn_handle(),
 		&BlockId::Hash(parent_header.hash()),
 		"BlockBuilder_finalize_block",
 		Default::default(),
+		post_delta_root,
+		storage_proof,
 	)
 	.expect("Check `finalize_block` proof");
 

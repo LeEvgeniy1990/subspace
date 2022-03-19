@@ -37,7 +37,7 @@ use sp_api::{
 use sp_blockchain::{ApplyExtrinsicFailed, Error};
 use sp_core::{
 	traits::{CodeExecutor, SpawnNamed},
-	ExecutionContext,
+	ExecutionContext, H256,
 };
 use sp_runtime::{
 	generic::BlockId,
@@ -73,7 +73,6 @@ pub fn prove_execution<
 	let state_runtime_code = sp_state_machine::backend::BackendRuntimeCode::new(trie_backend);
 	let runtime_code =
 		state_runtime_code.runtime_code().map_err(sp_blockchain::Error::RuntimeCode)?;
-	// let runtime_code = self.check_override(runtime_code, at)?;
 
 	if let Some((delta, post_delta_root)) = delta_changes {
 		let delta_backend = create_delta_backend(trie_backend, delta, post_delta_root);
@@ -109,14 +108,14 @@ pub fn check_execution_proof<
 	Exec: CodeExecutor + 'static,
 	Spawn: SpawnNamed + Send + 'static,
 >(
-	pre_execution_root: sp_core::H256,
-	proof: StorageProof,
 	backend: &Arc<B>,
 	executor: &Exec,
 	spawn_handle: Spawn,
 	at: &BlockId<Block>,
 	method: &str,
 	call_data: &[u8],
+	pre_execution_root: H256,
+	proof: StorageProof,
 ) -> sp_blockchain::Result<Vec<u8>> {
 	let state = backend.state_at(*at)?;
 
