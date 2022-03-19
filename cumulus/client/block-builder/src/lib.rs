@@ -223,6 +223,16 @@ where
 		Ok(())
 	}
 
+	fn collect_storage_changes(
+		&self,
+	) -> Result<sp_api::StorageChanges<backend::StateBackendFor<B, Block>, Block>, Error> {
+		let state = self.backend.state_at(self.block_id)?;
+		let parent_hash = self.parent_hash;
+		self.api
+			.into_storage_changes(&state, parent_hash)
+			.map_err(sp_blockchain::Error::StorageChanges)
+	}
+
 	/// Returns the state before executing the extrinsic at given extrinsic index.
 	pub fn prepare_storage_changes_before(
 		&mut self,
@@ -230,12 +240,7 @@ where
 	) -> Result<sp_api::StorageChanges<backend::StateBackendFor<B, Block>, Block>, Error> {
 		for (index, xt) in self.extrinsics.iter().enumerate() {
 			if index == extrinsic_index {
-				let state = self.backend.state_at(self.block_id)?;
-				let parent_hash = self.parent_hash;
-				return Ok(self
-					.api
-					.into_storage_changes(&state, parent_hash)
-					.map_err(sp_blockchain::Error::StorageChanges)?)
+				return Ok(self.collect_storage_changes()?)
 			}
 
 			// TODO: rethink what to do if an error occurs when executing the transaction.
@@ -267,12 +272,7 @@ where
 		&self,
 	) -> Result<sp_api::StorageChanges<backend::StateBackendFor<B, Block>, Block>, Error> {
 		self.execute_extrinsics()?;
-		let state = self.backend.state_at(self.block_id)?;
-		let parent_hash = self.parent_hash;
-		Ok(self
-			.api
-			.into_storage_changes(&state, parent_hash)
-			.map_err(sp_blockchain::Error::StorageChanges)?)
+		self.collect_storage_changes()
 	}
 
 	/// Consume the builder to build a valid `Block` containing all pushed extrinsics.
@@ -297,13 +297,7 @@ where
 
 		let proof = self.api.extract_proof();
 
-		let state = self.backend.state_at(self.block_id)?;
-		let parent_hash = self.parent_hash;
-
-		let storage_changes = self
-			.api
-			.into_storage_changes(&state, parent_hash)
-			.map_err(|e| sp_blockchain::Error::StorageChanges(e))?;
+		let storage_changes = self.collect_storage_changes()?;
 
 		Ok(BuiltBlock {
 			block: <Block as BlockT>::new(header, self.extrinsics),
