@@ -192,23 +192,10 @@ async fn test_fraud_proof() {
 
 	// Index of the extrinsic to proof.
 	for (target_extrinsic_index, xt) in test_txs.clone().into_iter().enumerate() {
-		let parent_state = charlie
-			.client
-			.state_at(&BlockId::Hash(parent_header.hash()))
-			.expect("Get parent state");
-
 		let mut block_builder = create_block_builder();
-		let overlayed_changes = block_builder
-			.prepare_overlay_before(target_extrinsic_index)
-			.expect("Failed to get overlayed changes");
-		let storage_changes = overlayed_changes
-			.into_storage_changes(
-				&parent_state,
-				best_hash, // unused.
-				Default::default(),
-				sp_core::storage::StateVersion::V1,
-			)
-			.expect("Failed to convert `OverlayedChanges` to `StorageChanges`");
+		let storage_changes = block_builder
+			.prepare_storage_changes_before(target_extrinsic_index)
+			.expect("Failed to get StorageChanges");
 
 		let delta = storage_changes.transaction;
 		let post_delta_root = storage_changes.transaction_storage_root;
@@ -265,24 +252,10 @@ async fn test_fraud_proof() {
 	}
 
 	// finalize_block
-	let mut block_builder = create_block_builder();
-	let overlayed_changes = block_builder
-		.prepare_overlay_before_finalize_block()
-		.expect("Failed to get overlayed changes");
-
-	let parent_state = charlie
-		.client
-		.state_at(&BlockId::Hash(parent_header.hash()))
-		.expect("Get parent state");
-
-	let storage_changes = overlayed_changes
-		.into_storage_changes(
-			&parent_state,
-			best_hash, // unused.
-			Default::default(),
-			sp_core::storage::StateVersion::V1,
-		)
-		.expect("Failed to convert `OverlayedChanges` to `StorageChanges`");
+	let block_builder = create_block_builder();
+	let storage_changes = block_builder
+		.prepare_storage_changes_before_finalize_block()
+		.expect("Failed to get StorageChanges");
 
 	let delta = storage_changes.transaction;
 	let post_delta_root = storage_changes.transaction_storage_root;

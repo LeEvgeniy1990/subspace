@@ -319,20 +319,11 @@ where
 
 		let state = self.backend.state_at(BlockId::Hash(parent_hash))?;
 
-		let storage_changes = block_builder
-			.prepare_overlay_before(extrinsic_index)?
-			.into_storage_changes(
-				&state,
-				parent_hash, // unused.
-				Default::default(),
-				sp_core::storage::StateVersion::V1,
-			)
-			.expect("Convert to storage changes");
+		let storage_changes = block_builder.prepare_storage_changes_before(extrinsic_index)?;
 
 		let delta = storage_changes.transaction;
 		let post_delta_root = storage_changes.transaction_storage_root;
 
-		// TODO: Convert storage_changes to delta.
 		let execution_proof = cirrus_fraud_proof::prove_execution(
 			&self.backend,
 			&*self.code_executor,
