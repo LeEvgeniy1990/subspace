@@ -2,7 +2,7 @@ use cirrus_block_builder::{BlockBuilder, RecordProof};
 use cirrus_primitives::{Hash, SecondaryApi};
 use cirrus_test_service::{
 	run_primary_chain_validator_node,
-	runtime::{Block, Header},
+	runtime::Header,
 	Keyring::{Alice, Charlie, Dave},
 };
 use codec::{Decode, Encode};
@@ -10,7 +10,7 @@ use sc_client_api::HeaderBackend;
 use sp_api::ProvideRuntimeApi;
 use sp_runtime::{
 	generic::BlockId,
-	traits::{BlakeTwo256, HashFor, Header as HeaderT},
+	traits::{BlakeTwo256, Header as HeaderT},
 };
 
 #[substrate_test_utils::test]
@@ -89,7 +89,6 @@ async fn test_fraud_proof() {
 		false,
 		0,
 	);
-
 	let transfer_to_dave = cirrus_test_service::construct_extrinsic(
 		&charlie.client,
 		pallet_balances::Call::transfer {
@@ -100,7 +99,6 @@ async fn test_fraud_proof() {
 		false,
 		1,
 	);
-
 	let transfer_to_charlie_again = cirrus_test_service::construct_extrinsic(
 		&charlie.client,
 		pallet_balances::Call::transfer {
@@ -126,13 +124,11 @@ async fn test_fraud_proof() {
 	charlie.wait_for_blocks(1).await;
 
 	let best_hash = charlie.client.info().best_hash;
-
 	let header = charlie.client.header(&BlockId::Hash(best_hash)).unwrap().unwrap();
-
 	let parent_header =
 		charlie.client.header(&BlockId::Hash(*header.parent_hash())).unwrap().unwrap();
 
-	let create_block_builder = || {
+	let create_block_builder_with_extrinsics = || {
 		let mut block_builder = BlockBuilder::new(
 			&*charlie.client,
 			parent_header.hash(),
@@ -192,8 +188,7 @@ async fn test_fraud_proof() {
 
 	// Index of the extrinsic to proof.
 	for (target_extrinsic_index, xt) in test_txs.clone().into_iter().enumerate() {
-		let mut block_builder = create_block_builder();
-		let storage_changes = block_builder
+		let storage_changes = create_block_builder_with_extrinsics()
 			.prepare_storage_changes_before(target_extrinsic_index)
 			.expect("Failed to get StorageChanges");
 
@@ -227,8 +222,8 @@ async fn test_fraud_proof() {
 
 		assert_eq!(target_trace_root, post_delta_root);
 
-		// FIXME: conver the storage proof to compact proof in fraud proof
-		let compact_proof = storage_proof
+		// TODO: conver the storage proof to compact proof in `FraudProof`.
+		let _compact_proof = storage_proof
 			.clone()
 			.into_compact_proof::<BlakeTwo256>(post_delta_root)
 			.expect("Convert storage proof to compact proof");
@@ -252,8 +247,7 @@ async fn test_fraud_proof() {
 	}
 
 	// finalize_block
-	let block_builder = create_block_builder();
-	let storage_changes = block_builder
+	let storage_changes = create_block_builder_with_extrinsics()
 		.prepare_storage_changes_before_finalize_block()
 		.expect("Failed to get StorageChanges");
 

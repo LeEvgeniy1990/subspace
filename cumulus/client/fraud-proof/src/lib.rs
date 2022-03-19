@@ -48,6 +48,11 @@ use sp_state_machine::{TrieBackend, TrieBackendStorage};
 use sp_trie::DBValue;
 use std::sync::Arc;
 
+/// Returns a storage proof which can be used to reconstruct a partial state trie to re-run
+/// the execution by someone who does not own the whole state.
+// TODO: too many arguments, but no need to refactor it right now as the API of execution proof
+// on the primary node might have some other considerations, e.g., RuntimeCode will be fetched
+// another way.
 pub fn prove_execution<
 	Block: BlockT,
 	B: backend::Backend<Block>,
@@ -102,6 +107,8 @@ pub fn prove_execution<
 	}
 }
 
+/// Runs the execution with given storage proof and returns the execution result.
+// TODO: too many arguments.
 pub fn check_execution_proof<
 	Block: BlockT,
 	B: backend::Backend<Block>,
