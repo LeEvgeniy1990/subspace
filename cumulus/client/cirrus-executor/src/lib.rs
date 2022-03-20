@@ -294,6 +294,18 @@ where
 		);
 	}
 
+	fn header(&self, at: Block::Hash) -> Result<Block::Header, sp_blockchain::Error> {
+		self.client
+			.header(BlockId::Hash(at))?
+			.ok_or(sp_blockchain::Error::Backend(format!("Header not found for {:?}", at)))
+	}
+
+	fn block_body(&self, at: Block::Hash) -> Result<Vec<Block::Extrinsic>, sp_blockchain::Error> {
+		self.client
+			.block_body(&BlockId::Hash(at))?
+			.ok_or(sp_blockchain::Error::Backend(format!("Block body not found for {:?}", at)))
+	}
+
 	fn create_extrinsic_execution_proof(
 		&self,
 		extrinsic_index: usize,
@@ -309,9 +321,7 @@ where
 			&*self.backend,
 		)?;
 
-		let extrinsics = self.client.block_body(&BlockId::Hash(current_hash))?.ok_or(
-			sp_blockchain::Error::Backend(format!("Block body not found for {:?}", current_hash)),
-		)?;
+		let extrinsics = self.block_body(current_hash)?;
 
 		let encoded_extrinsic = extrinsics[extrinsic_index].encode();
 
@@ -571,20 +581,8 @@ where
 					}
 				},
 			) {
-			let header = self
-				.client
-				.header(BlockId::Hash(execution_receipt.secondary_hash))?
-				.ok_or(sp_blockchain::Error::Backend(format!(
-					"Header not found for {:?}",
-					execution_receipt.secondary_hash
-				)))?;
-
-			let parent_header = self.client.header(BlockId::Hash(*header.parent_hash()))?.ok_or(
-				sp_blockchain::Error::Backend(format!(
-					"Header not found for {:?}",
-					*header.parent_hash()
-				)),
-			)?;
+			let header = self.header(execution_receipt.secondary_hash)?;
+			let parent_header = self.header(*header.parent_hash())?;
 
 			// TODO: avoid the encode & decode?
 			let as_h256 = |state_root: &Block::Hash| {
@@ -637,14 +635,7 @@ where
 					&*self.backend,
 				)?;
 
-				let extrinsics = self
-					.client
-					.block_body(&BlockId::Hash(execution_receipt.secondary_hash))?
-					.ok_or(sp_blockchain::Error::Backend(format!(
-						"Block body not found for {:?}",
-						execution_receipt.secondary_hash
-					)))?;
-
+				let extrinsics = self.block_body(execution_receipt.secondary_hash)?;
 				block_builder.set_extrinsics(extrinsics);
 
 				let storage_changes =

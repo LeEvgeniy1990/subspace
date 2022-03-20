@@ -27,22 +27,17 @@
 #![warn(missing_docs)]
 #![allow(clippy::all)]
 
-use codec::{Codec, Decode, Encode};
+use codec::Codec;
 use hash_db::{HashDB, Hasher, Prefix};
-use sc_client_api::{backend, CallExecutor, ExecutorProvider};
-use sp_api::{
-	ApiExt, ApiRef, Core, ProvideRuntimeApi, StateBackend, StorageChanges, StorageProof,
-	TransactionOutcome,
-};
-use sp_blockchain::{ApplyExtrinsicFailed, Error};
+use sc_client_api::backend;
+use sp_api::{StateBackend, StorageProof};
 use sp_core::{
 	traits::{CodeExecutor, SpawnNamed},
-	ExecutionContext, H256,
+	H256,
 };
 use sp_runtime::{
 	generic::BlockId,
-	traits::{BlakeTwo256, Block as BlockT, Hash, HashFor, Header as HeaderT, NumberFor, One},
-	Digest,
+	traits::{BlakeTwo256, Block as BlockT, HashFor},
 };
 use sp_state_machine::{TrieBackend, TrieBackendStorage};
 use sp_trie::DBValue;
@@ -164,7 +159,7 @@ where
 	let delta_backend = DeltaBackend {
 		backend: essence.backend_storage(),
 		delta,
-		_phantom: sp_std::marker::PhantomData::<H>,
+		_phantom: std::marker::PhantomData::<H>,
 	};
 	TrieBackend::new(delta_backend, post_delta_root)
 }
@@ -173,7 +168,7 @@ struct DeltaBackend<'a, S: 'a + TrieBackendStorage<H>, H: 'a + Hasher, DB: HashD
 	backend: &'a S,
 	/// Pending changes to the backend.
 	delta: DB,
-	_phantom: sp_std::marker::PhantomData<H>,
+	_phantom: std::marker::PhantomData<H>,
 }
 
 impl<'a, S: 'a + TrieBackendStorage<H>, H: 'a + Hasher, DB: HashDB<H, DBValue>>
