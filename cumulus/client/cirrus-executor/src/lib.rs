@@ -317,22 +317,11 @@ where
 
 		block_builder.set_extrinsics(extrinsics);
 
-		let state = self.backend.state_at(BlockId::Hash(parent_hash))?;
-
-		let storage_changes = block_builder
-			.prepare_overlay_before(extrinsic_index)?
-			.into_storage_changes(
-				&state,
-				parent_hash, // unused.
-				Default::default(),
-				sp_core::storage::StateVersion::V1,
-			)
-			.expect("Convert to storage changes");
+		let storage_changes = block_builder.prepare_storage_changes_before(extrinsic_index)?;
 
 		let delta = storage_changes.transaction;
 		let post_delta_root = storage_changes.transaction_storage_root;
 
-		// TODO: Convert storage_changes to delta.
 		let execution_proof = cirrus_fraud_proof::prove_execution(
 			&self.backend,
 			&*self.code_executor,
@@ -416,6 +405,11 @@ where
 	}
 }
 
+type TransactionFor<Backend, Block> =
+	<<Backend as sc_client_api::Backend<Block>>::State as sc_client_api::backend::StateBackend<
+		HashFor<Block>,
+	>>::Transaction;
+
 /// Error type for cirrus gossip handling.
 #[derive(Debug, thiserror::Error)]
 pub enum GossipMessageError {
@@ -454,9 +448,7 @@ where
 		Error = sp_consensus::Error,
 	>,
 	Backend: sc_client_api::Backend<Block> + Send + Sync + 'static,
-	<<Backend as sc_client_api::Backend<Block>>::State as sc_client_api::backend::StateBackend<
-		HashFor<Block>,
-	>>::Transaction: sp_trie::HashDBT<HashFor<Block>, sp_trie::DBValue>,
+	TransactionFor<Backend, Block>: sp_trie::HashDBT<HashFor<Block>, sp_trie::DBValue>,
 	TransactionPool: sc_transaction_pool_api::TransactionPool<Block = Block> + 'static,
 	CIDP: CreateInherentDataProviders<Block, Hash> + 'static,
 	E: CodeExecutor,
@@ -605,27 +597,29 @@ where
 				let pre_state_root = as_h256(parent_header.state_root())?;
 				let post_state_root = as_h256(&execution_receipt.trace[0])?;
 
-				/*
-				let header = <<Block as BlockT>::Header as HeaderT>::new(
-					*header.number(),
+				let new_header = Block::Header::new(
+					block_number,
 					Default::default(),
 					Default::default(),
 					parent_header.hash(),
 					Default::default(),
 				);
 
-				let execution_proof = cirrus_fraud_proof::prove_execution(
+				let proof = cirrus_fraud_proof::prove_execution::<
+					_,
+					_,
+					_,
+					_,
+					TransactionFor<Backend, Block>,
+				>(
 					&self.backend,
 					&*self.code_executor,
 					self.spawner.clone() as Box<dyn SpawnNamed>,
 					&BlockId::Hash(parent_header.hash()),
 					"SecondaryApi_initialize_block_with_post_state_root",
-					&header.encode(),
+					&new_header.encode(),
 					None,
 				)?;
-				*/
-
-				let proof = unimplemented!("TODO: proof `initialize_block`");
 
 				FraudProof { pre_state_root, post_state_root, proof }
 			} else if local_trace_idx == local_receipt.trace.len() - 1 {
@@ -633,7 +627,41 @@ where
 				let pre_state_root = as_h256(&execution_receipt.trace[local_trace_idx - 1])?;
 				let post_state_root = as_h256(&execution_receipt.trace[local_trace_idx])?;
 
-				let proof = unimplemented!("TODO: proof `finalize_block`");
+				let mut block_builder = BlockBuilder::new(
+					&*self.client,
+					parent_header.hash(),
+					self.client
+						.expect_block_number_from_id(&BlockId::Hash(parent_header.hash()))?,
+					RecordProof::No,
+					Default::default(),
+					&*self.backend,
+				)?;
+
+				let extrinsics = self
+					.client
+					.block_body(&BlockId::Hash(execution_receipt.secondary_hash))?
+					.ok_or(sp_blockchain::Error::Backend(format!(
+						"Block body not found for {:?}",
+						execution_receipt.secondary_hash
+					)))?;
+
+				block_builder.set_extrinsics(extrinsics);
+
+				let storage_changes =
+					block_builder.prepare_storage_changes_before_finalize_block()?;
+
+				let delta = storage_changes.transaction;
+				let post_delta_root = storage_changes.transaction_storage_root;
+
+				let proof = cirrus_fraud_proof::prove_execution(
+					&self.backend,
+					&*self.code_executor,
+					self.spawner.clone() as Box<dyn SpawnNamed>,
+					&BlockId::Hash(parent_header.hash()),
+					"BlockBuilder_finalize_block",
+					Default::default(),
+					Some((delta, post_delta_root)),
+				)?;
 
 				FraudProof { pre_state_root, post_state_root, proof }
 			} else {

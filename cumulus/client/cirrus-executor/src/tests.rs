@@ -2,7 +2,7 @@ use cirrus_block_builder::{BlockBuilder, RecordProof};
 use cirrus_primitives::{Hash, SecondaryApi};
 use cirrus_test_service::{
 	run_primary_chain_validator_node,
-	runtime::{Block, Header},
+	runtime::Header,
 	Keyring::{Alice, Charlie, Dave},
 };
 use codec::{Decode, Encode};
@@ -10,7 +10,7 @@ use sc_client_api::HeaderBackend;
 use sp_api::ProvideRuntimeApi;
 use sp_runtime::{
 	generic::BlockId,
-	traits::{BlakeTwo256, HashFor, Header as HeaderT},
+	traits::{BlakeTwo256, Header as HeaderT},
 };
 
 #[substrate_test_utils::test]
@@ -89,7 +89,6 @@ async fn test_fraud_proof() {
 		false,
 		0,
 	);
-
 	let transfer_to_dave = cirrus_test_service::construct_extrinsic(
 		&charlie.client,
 		pallet_balances::Call::transfer {
@@ -100,7 +99,6 @@ async fn test_fraud_proof() {
 		false,
 		1,
 	);
-
 	let transfer_to_charlie_again = cirrus_test_service::construct_extrinsic(
 		&charlie.client,
 		pallet_balances::Call::transfer {
@@ -126,13 +124,11 @@ async fn test_fraud_proof() {
 	charlie.wait_for_blocks(1).await;
 
 	let best_hash = charlie.client.info().best_hash;
-
 	let header = charlie.client.header(&BlockId::Hash(best_hash)).unwrap().unwrap();
-
 	let parent_header =
 		charlie.client.header(&BlockId::Hash(*header.parent_hash())).unwrap().unwrap();
 
-	let create_block_builder = || {
+	let create_block_builder_with_extrinsics = || {
 		let mut block_builder = BlockBuilder::new(
 			&*charlie.client,
 			parent_header.hash(),
@@ -174,14 +170,14 @@ async fn test_fraud_proof() {
 		.expect("Get intermediate roots");
 
 	let execution_result = cirrus_fraud_proof::check_execution_proof(
-		*parent_header.state_root(),
-		storage_proof,
 		&charlie.backend,
 		&*charlie.code_executor,
 		charlie.task_manager.spawn_handle(),
 		&BlockId::Hash(parent_header.hash()),
 		"SecondaryApi_initialize_block_with_post_state_root",
 		&header.encode(),
+		*parent_header.state_root(),
+		storage_proof,
 	)
 	.expect("Check `initialize_block` proof");
 
@@ -192,23 +188,9 @@ async fn test_fraud_proof() {
 
 	// Index of the extrinsic to proof.
 	for (target_extrinsic_index, xt) in test_txs.clone().into_iter().enumerate() {
-		let parent_state = charlie
-			.client
-			.state_at(&BlockId::Hash(parent_header.hash()))
-			.expect("Get parent state");
-
-		let mut block_builder = create_block_builder();
-		let overlayed_changes = block_builder
-			.prepare_overlay_before(target_extrinsic_index)
-			.expect("Failed to get overlayed changes");
-		let storage_changes = overlayed_changes
-			.into_storage_changes(
-				&parent_state,
-				best_hash, // unused.
-				Default::default(),
-				sp_core::storage::StateVersion::V1,
-			)
-			.expect("Failed to convert `OverlayedChanges` to `StorageChanges`");
+		let storage_changes = create_block_builder_with_extrinsics()
+			.prepare_storage_changes_before(target_extrinsic_index)
+			.expect("Failed to get StorageChanges");
 
 		let delta = storage_changes.transaction;
 		let post_delta_root = storage_changes.transaction_storage_root;
@@ -240,21 +222,21 @@ async fn test_fraud_proof() {
 
 		assert_eq!(target_trace_root, post_delta_root);
 
-		// FIXME: conver the storage proof to compact proof in fraud proof
-		let compact_proof = storage_proof
+		// TODO: conver the storage proof to compact proof in `FraudProof`.
+		let _compact_proof = storage_proof
 			.clone()
 			.into_compact_proof::<BlakeTwo256>(post_delta_root)
 			.expect("Convert storage proof to compact proof");
 
 		let execution_result = cirrus_fraud_proof::check_execution_proof(
-			post_delta_root,
-			storage_proof,
 			&charlie.backend,
 			&*charlie.code_executor,
 			charlie.task_manager.spawn_handle(),
 			&BlockId::Hash(parent_header.hash()),
 			"SecondaryApi_apply_extrinsic_with_post_state_root",
 			&xt.encode(),
+			post_delta_root,
+			storage_proof,
 		)
 		.expect("Check extrinsic execution proof");
 
@@ -265,24 +247,9 @@ async fn test_fraud_proof() {
 	}
 
 	// finalize_block
-	let mut block_builder = create_block_builder();
-	let overlayed_changes = block_builder
-		.prepare_overlay_before_finalize_block()
-		.expect("Failed to get overlayed changes");
-
-	let parent_state = charlie
-		.client
-		.state_at(&BlockId::Hash(parent_header.hash()))
-		.expect("Get parent state");
-
-	let storage_changes = overlayed_changes
-		.into_storage_changes(
-			&parent_state,
-			best_hash, // unused.
-			Default::default(),
-			sp_core::storage::StateVersion::V1,
-		)
-		.expect("Failed to convert `OverlayedChanges` to `StorageChanges`");
+	let storage_changes = create_block_builder_with_extrinsics()
+		.prepare_storage_changes_before_finalize_block()
+		.expect("Failed to get StorageChanges");
 
 	let delta = storage_changes.transaction;
 	let post_delta_root = storage_changes.transaction_storage_root;
@@ -301,14 +268,14 @@ async fn test_fraud_proof() {
 	.expect("Create extrinsic execution proof");
 
 	let execution_result = cirrus_fraud_proof::check_execution_proof(
-		post_delta_root,
-		storage_proof,
 		&charlie.backend,
 		&*charlie.code_executor,
 		charlie.task_manager.spawn_handle(),
 		&BlockId::Hash(parent_header.hash()),
 		"BlockBuilder_finalize_block",
 		Default::default(),
+		post_delta_root,
+		storage_proof,
 	)
 	.expect("Check `finalize_block` proof");
 

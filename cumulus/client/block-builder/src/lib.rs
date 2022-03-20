@@ -223,14 +223,24 @@ where
 		Ok(())
 	}
 
-	/// Returns the overlayed changes before executing the extrinsic at given extrinsic index.
-	pub fn prepare_overlay_before(
+	fn collect_storage_changes(
+		&self,
+	) -> Result<sp_api::StorageChanges<backend::StateBackendFor<B, Block>, Block>, Error> {
+		let state = self.backend.state_at(self.block_id)?;
+		let parent_hash = self.parent_hash;
+		self.api
+			.into_storage_changes(&state, parent_hash)
+			.map_err(sp_blockchain::Error::StorageChanges)
+	}
+
+	/// Returns the state before executing the extrinsic at given extrinsic index.
+	pub fn prepare_storage_changes_before(
 		&mut self,
 		extrinsic_index: usize,
-	) -> Result<sp_api::OverlayedChanges, Error> {
+	) -> Result<sp_api::StorageChanges<backend::StateBackendFor<B, Block>, Block>, Error> {
 		for (index, xt) in self.extrinsics.iter().enumerate() {
 			if index == extrinsic_index {
-				return Ok(self.api.overlay().into_inner())
+				return Ok(self.collect_storage_changes()?)
 			}
 
 			// TODO: rethink what to do if an error occurs when executing the transaction.
@@ -257,9 +267,12 @@ where
 		))))
 	}
 
-	pub fn prepare_overlay_before_finalize_block(&self) -> Result<sp_api::OverlayedChanges, Error> {
+	/// Returns the state before finalizing the block.
+	pub fn prepare_storage_changes_before_finalize_block(
+		&self,
+	) -> Result<sp_api::StorageChanges<backend::StateBackendFor<B, Block>, Block>, Error> {
 		self.execute_extrinsics()?;
-		Ok(self.api.overlay().into_inner())
+		self.collect_storage_changes()
 	}
 
 	/// Consume the builder to build a valid `Block` containing all pushed extrinsics.
@@ -284,13 +297,7 @@ where
 
 		let proof = self.api.extract_proof();
 
-		let state = self.backend.state_at(self.block_id)?;
-		let parent_hash = self.parent_hash;
-
-		let storage_changes = self
-			.api
-			.into_storage_changes(&state, parent_hash)
-			.map_err(|e| sp_blockchain::Error::StorageChanges(e))?;
+		let storage_changes = self.collect_storage_changes()?;
 
 		Ok(BuiltBlock {
 			block: <Block as BlockT>::new(header, self.extrinsics),
