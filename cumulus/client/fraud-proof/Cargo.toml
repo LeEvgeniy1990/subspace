@@ -5,7 +5,7 @@ authors = ["Liu-Cheng Xu <xuliuchengxlc@gmail.com>"]
 edition = "2021"
 license = "GPL-3.0-or-later"
 homepage = "https://subspace.network"
-repository = "https://github.com/paritytech/substrate/"
+repository = "https://github.com/subspace/subspace/"
 description = "Subspace fraud proof utilities"
 
 [package.metadata.docs.rs]
@@ -21,6 +21,3 @@ sp-core = { git = "https://github.com/paritytech/substrate", rev = "c364008a6c7d
 sp-runtime = { git = "https://github.com/paritytech/substrate", rev = "c364008a6c7da8456e17967f55edf51e45146998" }
 sp-state-machine = { git = "https://github.com/paritytech/substrate", rev = "c364008a6c7da8456e17967f55edf51e45146998" }
 sp-trie = { git = "https://github.com/paritytech/substrate", rev = "c364008a6c7da8456e17967f55edf51e45146998" }
-
-[dev-dependencies]
-substrate-test-runtime-client = { path = "../../../substrate/substrate-test-runtime-client" }

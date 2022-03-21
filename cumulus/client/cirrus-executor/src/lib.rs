@@ -328,7 +328,6 @@ where
 			&*self.backend,
 			extrinsics,
 		)?;
-
 		let storage_changes = block_builder.prepare_storage_changes_before(extrinsic_index)?;
 
 		let delta = storage_changes.transaction;
@@ -631,7 +630,6 @@ where
 					&*self.backend,
 					self.block_body(execution_receipt.secondary_hash)?,
 				)?;
-
 				let storage_changes =
 					block_builder.prepare_storage_changes_before_finalize_block()?;
 
