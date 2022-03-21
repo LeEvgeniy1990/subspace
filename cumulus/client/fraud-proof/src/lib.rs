@@ -1,31 +1,11 @@
-// This file is part of Substrate.
-
-// Copyright (C) 2017-2021 Parity Technologies (UK) Ltd.
-// SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
-
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-// GNU General Public License for more details.
-
-// You should have received a copy of the GNU General Public License
-// along with this program. If not, see <https://www.gnu.org/licenses/>.
-
-//! Substrate block builder
+//! Subspace fraud proof
 //!
-//! This crate provides the [`BlockBuilder`] utility and the corresponding runtime api
-//! [`BlockBuilder`](sp_block_builder::BlockBuilder).
-//!
-//! The block builder utility is used in the node as an abstraction over the runtime api to
-//! initialize a block, to push extrinsics and to finalize a block.
+//! This crates provides the feature of generating and verifying the execution proof used in
+//! the Subspace fraud proof mechanism. The execution can be more fine-grained, block execution
+//! hooks (`initialize_block` and `finalize_block`) and any specific extrinsic execution are
+//! supported.
 
 #![warn(missing_docs)]
-#![allow(clippy::all)]
 
 use codec::Codec;
 use hash_db::{HashDB, Hasher, Prefix};
@@ -48,6 +28,7 @@ use std::sync::Arc;
 // TODO: too many arguments, but no need to refactor it right now as the API of execution proof
 // on the primary node might have some other considerations, e.g., RuntimeCode will be fetched
 // another way.
+#[allow(clippy::too_many_arguments)]
 pub fn prove_execution<
 	Block: BlockT,
 	B: backend::Backend<Block>,
@@ -89,7 +70,7 @@ pub fn prove_execution<
 		.map_err(Into::into)
 	} else {
 		sp_state_machine::prove_execution_on_trie_backend(
-			&trie_backend,
+			trie_backend,
 			&mut Default::default(),
 			executor,
 			spawn_handle,
@@ -102,8 +83,13 @@ pub fn prove_execution<
 	}
 }
 
-/// Runs the execution with given storage proof and returns the execution result.
+/// Runs the execution using the partial state constructed from the given storage proof and
+/// returns the execution result.
+///
+/// The execution result contains the information of state root after applying the execution
+/// so that it can be used to compare with the one specified in the fraud proof.
 // TODO: too many arguments.
+#[allow(clippy::too_many_arguments)]
 pub fn check_execution_proof<
 	Block: BlockT,
 	B: backend::Backend<Block>,
@@ -166,7 +152,6 @@ where
 
 struct DeltaBackend<'a, S: 'a + TrieBackendStorage<H>, H: 'a + Hasher, DB: HashDB<H, DBValue>> {
 	backend: &'a S,
-	/// Pending changes to the backend.
 	delta: DB,
 	_phantom: std::marker::PhantomData<H>,
 }
