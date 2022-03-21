@@ -160,7 +160,7 @@ where
 		api: &'a A,
 		parent_hash: Block::Hash,
 		parent_number: NumberFor<Block>,
-		record_proof: RecordProof, // TODO: remove as it's useless
+		record_proof: RecordProof,
 		inherent_digests: Digest,
 		backend: &'a B,
 	) -> Result<Self, Error> {

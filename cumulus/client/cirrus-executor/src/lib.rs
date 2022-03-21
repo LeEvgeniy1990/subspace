@@ -611,7 +611,7 @@ where
 					&*self.code_executor,
 					self.spawner.clone() as Box<dyn SpawnNamed>,
 					&BlockId::Hash(parent_header.hash()),
-					"SecondaryApi_initialize_block_with_post_state_root",
+					"SecondaryApi_initialize_block_with_post_state_root", // TODO: "Core_initalize_block"
 					&new_header.encode(),
 					None,
 				)?;

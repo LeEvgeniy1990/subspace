@@ -51,7 +51,7 @@ async fn test_executor_full_node_catching_up() {
 }
 
 #[substrate_test_utils::test]
-async fn test_fraud_proof() {
+async fn execution_proof_creation_and_verification_should_work() {
 	let mut builder = sc_cli::LoggerBuilder::new("");
 	builder.with_colors(false);
 	let _ = builder.init();
@@ -139,6 +139,16 @@ async fn test_fraud_proof() {
 		.unwrap()
 	};
 
+	let intermediate_roots = charlie
+		.client
+		.runtime_api()
+		.intermediate_roots(&BlockId::Hash(best_hash))
+		.expect("Get intermediate roots");
+	println!(
+		"intermediate_roots: {:?}",
+		intermediate_roots.clone().into_iter().map(Hash::from).collect::<Vec<_>>()
+	);
+
 	let storage_proof = {
 		let new_header = Header::new(
 			*header.number(),
@@ -153,18 +163,12 @@ async fn test_fraud_proof() {
 			&*charlie.code_executor,
 			charlie.task_manager.spawn_handle(),
 			&BlockId::Hash(parent_header.hash()),
-			"SecondaryApi_initialize_block_with_post_state_root",
+			"SecondaryApi_initialize_block_with_post_state_root", // TODO: "Core_initalize_block"
 			&new_header.encode(),
 			None,
 		)
 		.expect("Create `initialize_block` proof")
 	};
-
-	let intermediate_roots = charlie
-		.client
-		.runtime_api()
-		.intermediate_roots(&BlockId::Hash(best_hash))
-		.expect("Get intermediate roots");
 
 	let execution_result = cirrus_fraud_proof::check_execution_proof(
 		&charlie.backend,
@@ -183,11 +187,12 @@ async fn test_fraud_proof() {
 	println!("Post `initialize_block` root: {:?}", post_execution_root);
 	assert_eq!(post_execution_root, intermediate_roots[0].into());
 
-	// Index of the extrinsic to proof.
 	for (target_extrinsic_index, xt) in test_txs.clone().into_iter().enumerate() {
 		let storage_changes = create_block_builder()
 			.prepare_storage_changes_before(target_extrinsic_index)
-			.expect("Failed to get StorageChanges");
+			.unwrap_or_else(|_| {
+				panic!("Get StorageChanges before extrinsic #{}", target_extrinsic_index)
+			});
 
 		let delta = storage_changes.transaction;
 		let post_delta_root = storage_changes.transaction_storage_root;
@@ -206,11 +211,6 @@ async fn test_fraud_proof() {
 		let target_trace_root: Hash = intermediate_roots[target_extrinsic_index].into();
 		println!("  post_delta_root: {:?}", post_delta_root);
 		println!("target_trace_root: {:?}", target_trace_root);
-		println!(
-			"intermediate_roots: {:?}",
-			intermediate_roots.clone().into_iter().map(Hash::from).collect::<Vec<_>>()
-		);
-
 		assert_eq!(target_trace_root, post_delta_root);
 
 		// TODO: conver the storage proof to compact proof in `FraudProof`.
