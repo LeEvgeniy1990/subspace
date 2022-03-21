@@ -126,18 +126,17 @@ async fn test_fraud_proof() {
 	let parent_header =
 		charlie.client.header(&BlockId::Hash(*header.parent_hash())).unwrap().unwrap();
 
-	let create_block_builder_with_extrinsics = || {
-		let mut block_builder = BlockBuilder::new(
+	let create_block_builder = || {
+		BlockBuilder::with_extrinsics(
 			&*charlie.client,
 			parent_header.hash(),
 			*parent_header.number(),
 			RecordProof::No,
 			Default::default(),
 			&*charlie.backend,
+			test_txs.clone().into_iter().map(Into::into).collect(),
 		)
-		.unwrap();
-		block_builder.set_extrinsics(test_txs.clone().into_iter().map(Into::into).collect());
-		block_builder
+		.unwrap()
 	};
 
 	let storage_proof = {
@@ -186,7 +185,7 @@ async fn test_fraud_proof() {
 
 	// Index of the extrinsic to proof.
 	for (target_extrinsic_index, xt) in test_txs.clone().into_iter().enumerate() {
-		let storage_changes = create_block_builder_with_extrinsics()
+		let storage_changes = create_block_builder()
 			.prepare_storage_changes_before(target_extrinsic_index)
 			.expect("Failed to get StorageChanges");
 
@@ -239,7 +238,7 @@ async fn test_fraud_proof() {
 	}
 
 	// finalize_block
-	let storage_changes = create_block_builder_with_extrinsics()
+	let storage_changes = create_block_builder()
 		.prepare_storage_changes_before_finalize_block()
 		.expect("Get StorageChanges before `finalize_block`");
 

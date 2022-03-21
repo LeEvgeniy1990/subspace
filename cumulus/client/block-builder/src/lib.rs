@@ -160,7 +160,7 @@ where
 		api: &'a A,
 		parent_hash: Block::Hash,
 		parent_number: NumberFor<Block>,
-		record_proof: RecordProof,
+		record_proof: RecordProof, // TODO: remove as it's useless
 		inherent_digests: Digest,
 		backend: &'a B,
 	) -> Result<Self, Error> {
@@ -192,6 +192,22 @@ where
 			backend,
 			estimated_header_size,
 		})
+	}
+
+	/// Create a new instance of builder with given extrinsics.
+	pub fn with_extrinsics(
+		api: &'a A,
+		parent_hash: Block::Hash,
+		parent_number: NumberFor<Block>,
+		record_proof: RecordProof,
+		inherent_digests: Digest,
+		backend: &'a B,
+		extrinsics: Vec<Block::Extrinsic>,
+	) -> Result<Self, Error> {
+		let mut block_builder =
+			Self::new(api, parent_hash, parent_number, record_proof, inherent_digests, backend)?;
+		block_builder.extrinsics = extrinsics;
+		Ok(block_builder)
 	}
 
 	/// Sets the extrinsics.
@@ -235,7 +251,7 @@ where
 
 	/// Returns the state before executing the extrinsic at given extrinsic index.
 	pub fn prepare_storage_changes_before(
-		&mut self,
+		&self,
 		extrinsic_index: usize,
 	) -> Result<sp_api::StorageChanges<backend::StateBackendFor<B, Block>, Block>, Error> {
 		for (index, xt) in self.extrinsics.iter().enumerate() {

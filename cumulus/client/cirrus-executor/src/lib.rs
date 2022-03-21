@@ -102,6 +102,11 @@ impl<Block: BlockT, Client, TransactionPool, Backend, CIDP, E> Clone
 	}
 }
 
+type TransactionFor<Backend, Block> =
+	<<Backend as sc_client_api::Backend<Block>>::State as sc_client_api::backend::StateBackend<
+		HashFor<Block>,
+	>>::Transaction;
+
 impl<Block, Client, TransactionPool, Backend, CIDP, E>
 	Executor<Block, Client, TransactionPool, Backend, CIDP, E>
 where
@@ -119,9 +124,7 @@ where
 		Error = sp_consensus::Error,
 	>,
 	Backend: sc_client_api::Backend<Block> + Send + Sync + 'static,
-	<<Backend as sc_client_api::Backend<Block>>::State as sc_client_api::backend::StateBackend<
-		HashFor<Block>,
-	>>::Transaction: sp_trie::HashDBT<HashFor<Block>, sp_trie::DBValue>,
+	TransactionFor<Backend, Block>: sp_trie::HashDBT<HashFor<Block>, sp_trie::DBValue>,
 	TransactionPool: sc_transaction_pool_api::TransactionPool<Block = Block> + 'static,
 	CIDP: CreateInherentDataProviders<Block, Hash> + 'static,
 	E: CodeExecutor,
@@ -312,20 +315,19 @@ where
 		parent_hash: Block::Hash,
 		current_hash: Block::Hash,
 	) -> Result<StorageProof, GossipMessageError> {
-		let mut block_builder = BlockBuilder::new(
+		let extrinsics = self.block_body(current_hash)?;
+
+		let encoded_extrinsic = extrinsics[extrinsic_index].encode();
+
+		let block_builder = BlockBuilder::with_extrinsics(
 			&*self.client,
 			parent_hash,
 			self.client.expect_block_number_from_id(&BlockId::Hash(parent_hash))?,
 			RecordProof::No,
 			Default::default(),
 			&*self.backend,
+			extrinsics,
 		)?;
-
-		let extrinsics = self.block_body(current_hash)?;
-
-		let encoded_extrinsic = extrinsics[extrinsic_index].encode();
-
-		block_builder.set_extrinsics(extrinsics);
 
 		let storage_changes = block_builder.prepare_storage_changes_before(extrinsic_index)?;
 
@@ -414,11 +416,6 @@ where
 		}
 	}
 }
-
-type TransactionFor<Backend, Block> =
-	<<Backend as sc_client_api::Backend<Block>>::State as sc_client_api::backend::StateBackend<
-		HashFor<Block>,
-	>>::Transaction;
 
 /// Error type for cirrus gossip handling.
 #[derive(Debug, thiserror::Error)]
@@ -625,7 +622,7 @@ where
 				let pre_state_root = as_h256(&execution_receipt.trace[local_trace_idx - 1])?;
 				let post_state_root = as_h256(&execution_receipt.trace[local_trace_idx])?;
 
-				let mut block_builder = BlockBuilder::new(
+				let block_builder = BlockBuilder::with_extrinsics(
 					&*self.client,
 					parent_header.hash(),
 					self.client
@@ -633,10 +630,8 @@ where
 					RecordProof::No,
 					Default::default(),
 					&*self.backend,
+					self.block_body(execution_receipt.secondary_hash)?,
 				)?;
-
-				let extrinsics = self.block_body(execution_receipt.secondary_hash)?;
-				block_builder.set_extrinsics(extrinsics);
 
 				let storage_changes =
 					block_builder.prepare_storage_changes_before_finalize_block()?;
