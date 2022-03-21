@@ -586,6 +586,7 @@ where
 					.map_err(|_| Self::Error::InvalidStateRootType)
 			};
 
+            // TODO: abstract the execution proof impl to be reusable in the test.
 			let fraud_proof = if local_trace_idx == 0 {
 				// `initialize_block` execution proof.
 				let pre_state_root = as_h256(parent_header.state_root())?;
