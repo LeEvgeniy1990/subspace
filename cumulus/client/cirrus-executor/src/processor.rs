@@ -221,12 +221,11 @@ where
 		let mut roots =
 			self.client.runtime_api().intermediate_roots(&BlockId::Hash(header_hash))?;
 
-		let state_root: [u8; 32] = state_root
+		let state_root = state_root
 			.encode()
 			.try_into()
 			.expect("State root uses the same Block hash type which must fit into [u8; 32]; qed");
 
-		println!("============ final state root: {:?}", Block::Hash::decode(&mut state_root.as_slice()).unwrap());
 		roots.push(state_root);
 
 		let trace_root = crate::merkle_tree::construct_trace_merkle_tree(roots.clone())?.root();

@@ -77,8 +77,6 @@ async fn test_fraud_proof() {
 	// dave is able to sync blocks.
 	futures::future::join(charlie.wait_for_blocks(3), dave.wait_for_blocks(3)).await;
 
-	// Ensure the extrinsic included is same with manually constructed one.
-	// Alternative: retrieve the extrinsic from the client
 	let transfer_to_charlie = cirrus_test_service::construct_extrinsic(
 		&charlie.client,
 		pallet_balances::Call::transfer {
@@ -120,7 +118,7 @@ async fn test_fraud_proof() {
 		charlie.send_extrinsic(tx.clone()).await.expect("Failed to send extrinsic");
 	}
 
-	// Wait until the transfer tx is included in the next block.
+	// Wait until the test txs are included in the next block.
 	charlie.wait_for_blocks(1).await;
 
 	let best_hash = charlie.client.info().best_hash;
@@ -206,12 +204,6 @@ async fn test_fraud_proof() {
 		)
 		.expect("Create extrinsic execution proof");
 
-		let intermediate_roots = charlie
-			.client
-			.runtime_api()
-			.intermediate_roots(&BlockId::Hash(best_hash))
-			.expect("Get intermediate roots");
-
 		let target_trace_root: Hash = intermediate_roots[target_extrinsic_index].into();
 		println!("  post_delta_root: {:?}", post_delta_root);
 		println!("target_trace_root: {:?}", target_trace_root);
@@ -249,7 +241,7 @@ async fn test_fraud_proof() {
 	// finalize_block
 	let storage_changes = create_block_builder_with_extrinsics()
 		.prepare_storage_changes_before_finalize_block()
-		.expect("Failed to get StorageChanges");
+		.expect("Get StorageChanges before `finalize_block`");
 
 	let delta = storage_changes.transaction;
 	let post_delta_root = storage_changes.transaction_storage_root;
@@ -265,7 +257,7 @@ async fn test_fraud_proof() {
 		Default::default(),
 		Some((delta, post_delta_root)),
 	)
-	.expect("Create extrinsic execution proof");
+	.expect("Create `finalize_block` proof");
 
 	let execution_result = cirrus_fraud_proof::check_execution_proof(
 		&charlie.backend,
