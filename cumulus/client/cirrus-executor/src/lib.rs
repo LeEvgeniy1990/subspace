@@ -312,7 +312,7 @@ where
 	fn create_extrinsic_execution_proof(
 		&self,
 		extrinsic_index: usize,
-		parent_hash: Block::Hash,
+		parent_header: &Block::Header,
 		current_hash: Block::Hash,
 	) -> Result<StorageProof, GossipMessageError> {
 		let extrinsics = self.block_body(current_hash)?;
@@ -321,8 +321,8 @@ where
 
 		let block_builder = BlockBuilder::with_extrinsics(
 			&*self.client,
-			parent_hash,
-			self.client.expect_block_number_from_id(&BlockId::Hash(parent_hash))?,
+			parent_header.hash(),
+			*parent_header.number(),
 			RecordProof::No,
 			Default::default(),
 			&*self.backend,
@@ -338,7 +338,7 @@ where
 			&self.backend,
 			&*self.code_executor,
 			self.spawner.clone() as Box<dyn SpawnNamed>,
-			&BlockId::Hash(parent_hash),
+			&BlockId::Hash(parent_header.hash()),
 			"BlockBuilder_apply_extrinsic",
 			&encoded_extrinsic,
 			Some((delta, post_delta_root)),
@@ -625,8 +625,7 @@ where
 				let block_builder = BlockBuilder::with_extrinsics(
 					&*self.client,
 					parent_header.hash(),
-					self.client
-						.expect_block_number_from_id(&BlockId::Hash(parent_header.hash()))?,
+					*parent_header.number(),
 					RecordProof::No,
 					Default::default(),
 					&*self.backend,
@@ -657,7 +656,7 @@ where
 
 				let proof = self.create_extrinsic_execution_proof(
 					local_trace_idx - 1,
-					parent_header.hash(),
+					&parent_header,
 					execution_receipt.secondary_hash,
 				)?;
 
